@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Autonomous brain run. Uses Claude Code non-interactively (existing subscription auth via CLAUDE_CODE_OAUTH_TOKEN).
+# The brain reads the full project state, then returns a JSON plan which this script applies through worthctl.
+# It never touches money, never posts anywhere by itself: it produces content, ideas, decisions and activity records.
+set -uo pipefail
+APP=/opt/worth-one
+OUT=/var/lib/worth-one/brain
+mkdir -p "$OUT"
+STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+MODEL=${WORTH_BRAIN_MODEL:-sonnet}
+NEXT=$(( $(date +%s) + 6*3600 ))
+
+if [ "$(worthctl state | python3 -c 'import sys,json;print(json.load(sys.stdin)["settings"]["PROJECT_STATUS"])')" = "PAUSED" ]; then
+  worthctl run brain skipped "PROJECT PAUSED by Pedro" "$NEXT"; exit 0
+fi
+if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] || ! command -v claude >/dev/null 2>&1; then
+  worthctl human "Authorize the autonomous brain" "Run once on the LXC: 'claude setup-token', paste the token as CLAUDE_CODE_OAUTH_TOKEN in /etc/worth-one/env, then 'systemctl start worth-brain'. Until then, only deterministic jobs run (site, analytics, reports, tunnel)."
+  worthctl run brain skipped "brain not authorized (no CLAUDE_CODE_OAUTH_TOKEN)" "$NEXT"; exit 0
+fi
+
+STATE=$(worthctl state)
+PROMPT=$(cat "$APP/brain/prompt.md"; echo; echo '## CURRENT STATE (JSON)'; echo "$STATE"; echo; echo '## EXISTING CONTENT FILES'; ls -1 "$APP/engine/content" 2>/dev/null)
+cd "$APP"
+worthctl cmd "SET CURRENT ACTION" "Brain run $STAMP in progress" >/dev/null
+RAW=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 1 2>"$OUT/$STAMP.err") || true
+echo "$RAW" > "$OUT/$STAMP.raw.json"
+python3 - "$RAW" "$STAMP" <<'PY'
+import json, sys, subprocess, re, os
+raw, stamp = sys.argv[1], sys.argv[2]
+def ctl(*a): return subprocess.run(["worthctl", *a], capture_output=True, text=True).stdout.strip()
+try:
+    env = json.loads(raw)
+except Exception:
+    ctl("run", "brain", "failed", "claude returned non-json"); sys.exit(0)
+usage = env.get("usage") or {}
+cost = env.get("total_cost_usd") or 0
+ctl("aicost", "brain", os.environ.get("WORTH_BRAIN_MODEL", "sonnet"), str(usage.get("input_tokens", 0)), str(usage.get("output_tokens", 0)), str(cost), stamp)
+text = env.get("result") or ""
+m = re.search(r"\{.*\}", text, re.S)
+if not m:
+    ctl("run", "brain", "failed", "no JSON plan in result"); sys.exit(0)
+try:
+    plan = json.loads(m.group(0))
+except Exception as e:
+    ctl("run", "brain", "failed", f"bad plan json: {e}"); sys.exit(0)
+out = "/var/lib/worth-one/brain"
+for a in plan.get("activity", [])[:30]:
+    ctl("activity", a.get("channel", "brain"), a.get("message", "")[:300], a.get("drop_id") or "")
+for d in plan.get("new_drops", [])[:5]:
+    p = f"{out}/{stamp}-{d['drop_id']}.json"; json.dump(d, open(p, "w")); ctl("drop", p)
+for c in plan.get("campaigns", [])[:20]:
+    p = f"{out}/{stamp}-{c['campaign_id']}.json"; json.dump(c, open(p, "w")); ctl("campaign", p)
+for h in plan.get("human_actions", [])[:5]:
+    ctl("human", h.get("title", "")[:120], h.get("detail", "")[:800])
+for k, v in (plan.get("content") or {}).items():
+    safe = re.sub(r"[^A-Za-z0-9._-]", "_", k)[:80]
+    open(f"/opt/worth-one/engine/content/{safe}", "w", encoding="utf-8").write(v)
+json.dump(plan.get("insights") or {}, open("/var/lib/worth-one/insights.json", "w"))
+if plan.get("current_action"): ctl("cmd", "SET CURRENT ACTION", plan["current_action"][:200])
+if plan.get("next_action"): ctl("cmd", "SET NEXT ACTION", plan["next_action"][:200])
+for cmd in plan.get("commands", [])[:10]:
+    if cmd.get("cmd", "").upper() in ("PAUSE DROP", "KILL DROP", "SCALE DROP", "RESUME DROP", "CHANGE PRIORITY"):
+        ctl("cmd", cmd["cmd"], cmd.get("arg", ""))
+ctl("run", "brain", "done", (plan.get("summary") or "")[:300], str(int(__import__('time').time()) + 6*3600))
+PY
+# commit generated content so it is versioned and visible on GitHub
+git add -A engine/content >/dev/null 2>&1 && git -c user.email=worth-one-bot@users.noreply.github.com -c user.name="worth-one bot" commit -q -m "brain: content $STAMP" >/dev/null 2>&1 && git push -q origin HEAD:main >/dev/null 2>&1 || true

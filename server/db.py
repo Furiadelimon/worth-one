@@ -1,0 +1,242 @@
+"""SQLite persistence for PROJECT WORTH ONE. Single file, WAL mode, stdlib only."""
+import json
+import os
+import sqlite3
+import threading
+import time
+from contextlib import contextmanager
+
+DB_PATH = os.environ.get("WORTH_DB", os.path.join(os.path.dirname(__file__), "..", "data", "worth.db"))
+_lock = threading.RLock()
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY,
+  ts REAL NOT NULL,
+  day TEXT NOT NULL,
+  type TEXT NOT NULL,
+  drop_id TEXT,
+  sid TEXT,
+  country TEXT,
+  ref TEXT,
+  src TEXT,
+  campaign TEXT,
+  amount REAL,
+  meta TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_events_day ON events(day);
+CREATE INDEX IF NOT EXISTS ix_events_type ON events(type);
+CREATE INDEX IF NOT EXISTS ix_events_sid ON events(sid);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  sid TEXT PRIMARY KEY,
+  first_ts REAL, last_ts REAL, country TEXT, ref TEXT, src TEXT, campaign TEXT, visits INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS drops (
+  drop_id TEXT PRIMARY KEY,
+  name TEXT, slug TEXT, status TEXT, concept TEXT, target_audience TEXT, emotion TEXT, utility TEXT,
+  share_trigger TEXT, viral_mechanism TEXT, expected_market TEXT, difficulty INTEGER, build_time TEXT,
+  estimated_cost TEXT, expected_value TEXT, monetization_relation TEXT, score REAL,
+  created_ts REAL, updated_ts REAL, notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS campaigns (
+  campaign_id TEXT PRIMARY KEY,
+  drop_id TEXT, platform TEXT, account TEXT, country TEXT, language TEXT, audience TEXT,
+  hypothesis TEXT, content TEXT, cta TEXT, url TEXT, date TEXT, status TEXT,
+  impressions INTEGER DEFAULT 0, clicks INTEGER DEFAULT 0, visitors INTEGER DEFAULT 0,
+  shares INTEGER DEFAULT 0, registrations INTEGER DEFAULT 0, support_intent INTEGER DEFAULT 0,
+  result TEXT, community_rules TEXT, created_ts REAL, updated_ts REAL
+);
+
+CREATE TABLE IF NOT EXISTS activity (
+  id INTEGER PRIMARY KEY, ts REAL NOT NULL, channel TEXT, drop_id TEXT, message TEXT, actor TEXT
+);
+
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+
+CREATE TABLE IF NOT EXISTS human_actions (
+  id INTEGER PRIMARY KEY, ts REAL, title TEXT, detail TEXT, status TEXT DEFAULT 'open', resolved_ts REAL
+);
+
+CREATE TABLE IF NOT EXISTS daily_reports (day TEXT PRIMARY KEY, ts REAL, report TEXT);
+
+CREATE TABLE IF NOT EXISTS ai_cost (
+  id INTEGER PRIMARY KEY, ts REAL, day TEXT, run TEXT, model TEXT,
+  input_tokens INTEGER, output_tokens INTEGER, usd REAL, note TEXT
+);
+
+CREATE TABLE IF NOT EXISTS supporters (
+  id INTEGER PRIMARY KEY, ts REAL, sid TEXT, email TEXT, amount REAL, drop_id TEXT, country TEXT, status TEXT DEFAULT 'intent'
+);
+
+CREATE TABLE IF NOT EXISTS runs (id INTEGER PRIMARY KEY, ts REAL, kind TEXT, status TEXT, summary TEXT, next_ts REAL);
+"""
+
+DEFAULT_SETTINGS = {
+    "PROJECT_STATUS": "ACTIVE",
+    "PAYMENTS_ENABLED": "false",
+    "CAR_TARGET": "15000",
+    "REAL_CONTRIBUTIONS": "0",
+    "PAUSED_CHANNELS": "[]",
+    "BLOCKED_CHANNELS": "[]",
+    "BLOCKED_COUNTRIES": "[]",
+    "PRIORITY": "DROP-001",
+    "CURRENT_ACTION": "Bootstrapping",
+    "NEXT_ACTION": "Publish DROP-001 and start distribution",
+    "NEXT_AUTONOMOUS_RUN": "",
+    "PUBLIC_URL": "",
+    "API_URL": "",
+}
+
+EVENT_COLS = ["page_view", "drop_start", "drop_result", "share", "share_card", "support_intent", "ready_to_support", "click", "referral_visit"]
+
+
+def connect():
+    os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
+    c = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10)
+    c.row_factory = sqlite3.Row
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA synchronous=NORMAL")
+    return c
+
+
+_conn = None
+
+
+def conn():
+    global _conn
+    if _conn is None:
+        _conn = connect()
+        _conn.executescript(SCHEMA)
+        for k, v in DEFAULT_SETTINGS.items():
+            _conn.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (k, v))
+        _conn.commit()
+    return _conn
+
+
+@contextmanager
+def tx():
+    with _lock:
+        c = conn()
+        try:
+            yield c
+            c.commit()
+        except Exception:
+            c.rollback()
+            raise
+
+
+def q(sql, params=()):
+    with _lock:
+        return [dict(r) for r in conn().execute(sql, params).fetchall()]
+
+
+def q1(sql, params=()):
+    rows = q(sql, params)
+    return rows[0] if rows else None
+
+
+def day_of(ts=None):
+    return time.strftime("%Y-%m-%d", time.gmtime(ts or time.time()))
+
+
+def get_setting(key, default=None):
+    r = q1("SELECT value FROM settings WHERE key=?", (key,))
+    return r["value"] if r else default
+
+
+def set_setting(key, value):
+    with tx() as c:
+        c.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, str(value)))
+
+
+def all_settings():
+    return {r["key"]: r["value"] for r in q("SELECT key,value FROM settings")}
+
+
+def log_activity(channel, message, drop_id=None, actor="system"):
+    with tx() as c:
+        c.execute("INSERT INTO activity(ts,channel,drop_id,message,actor) VALUES(?,?,?,?,?)", (time.time(), channel, drop_id, message, actor))
+
+
+def add_human_action(title, detail):
+    with tx() as c:
+        r = c.execute("SELECT id FROM human_actions WHERE title=? AND status='open'", (title,)).fetchone()
+        if r:
+            c.execute("UPDATE human_actions SET detail=? WHERE id=?", (detail, r["id"]))
+        else:
+            c.execute("INSERT INTO human_actions(ts,title,detail) VALUES(?,?,?)", (time.time(), title, detail))
+
+
+def resolve_human_action(id_):
+    with tx() as c:
+        c.execute("UPDATE human_actions SET status='done', resolved_ts=? WHERE id=?", (time.time(), id_))
+
+
+def record_run(kind, status, summary, next_ts=None):
+    with tx() as c:
+        c.execute("INSERT INTO runs(ts,kind,status,summary,next_ts) VALUES(?,?,?,?,?)", (time.time(), kind, status, summary, next_ts))
+
+
+def record_ai_cost(run, model, input_tokens, output_tokens, usd, note=""):
+    with tx() as c:
+        c.execute("INSERT INTO ai_cost(ts,day,run,model,input_tokens,output_tokens,usd,note) VALUES(?,?,?,?,?,?,?,?)",
+                  (time.time(), day_of(), run, model, input_tokens, output_tokens, usd, note))
+
+
+def record_event(type_, drop_id=None, sid=None, country=None, ref=None, src=None, campaign=None, amount=None, meta=None):
+    ts = time.time()
+    with tx() as c:
+        c.execute(
+            "INSERT INTO events(ts,day,type,drop_id,sid,country,ref,src,campaign,amount,meta) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+            (ts, day_of(ts), type_, drop_id, sid, country, ref, src, campaign, amount, json.dumps(meta or {})[:2000]),
+        )
+        is_new = False
+        if sid:
+            r = c.execute("SELECT sid FROM sessions WHERE sid=?", (sid,)).fetchone()
+            if r:
+                c.execute("UPDATE sessions SET last_ts=?, visits=visits+? WHERE sid=?", (ts, 1 if type_ == "page_view" else 0, sid))
+            else:
+                is_new = True
+                c.execute("INSERT INTO sessions(sid,first_ts,last_ts,country,ref,src,campaign) VALUES(?,?,?,?,?,?,?)", (sid, ts, ts, country, ref, src, campaign))
+        if campaign:
+            col = {"page_view": "visitors", "share": "shares", "support_intent": "support_intent", "click": "clicks"}.get(type_)
+            if col:
+                c.execute(f"UPDATE campaigns SET {col}={col}+1, updated_ts=? WHERE campaign_id=?", (ts, campaign))
+        return is_new
+
+
+def add_supporter(sid, email, amount, drop_id, country):
+    with tx() as c:
+        c.execute("INSERT INTO supporters(ts,sid,email,amount,drop_id,country) VALUES(?,?,?,?,?,?)", (time.time(), sid, email, amount, drop_id, country))
+
+
+def upsert_drop(d):
+    cols = ["drop_id", "name", "slug", "status", "concept", "target_audience", "emotion", "utility", "share_trigger",
+            "viral_mechanism", "expected_market", "difficulty", "build_time", "estimated_cost", "expected_value",
+            "monetization_relation", "score", "notes"]
+    vals = [d.get(k) for k in cols]
+    marks = ",".join(["?"] * len(cols))
+    with tx() as c:
+        r = c.execute("SELECT drop_id FROM drops WHERE drop_id=?", (d["drop_id"],)).fetchone()
+        if r:
+            sets = ",".join(k + "=?" for k in cols[1:])
+            c.execute("UPDATE drops SET " + sets + ", updated_ts=? WHERE drop_id=?", vals[1:] + [time.time(), d["drop_id"]])
+        else:
+            c.execute("INSERT INTO drops(" + ",".join(cols) + ",created_ts,updated_ts) VALUES(" + marks + ",?,?)", vals + [time.time(), time.time()])
+
+
+def upsert_campaign(d):
+    cols = ["campaign_id", "drop_id", "platform", "account", "country", "language", "audience", "hypothesis", "content",
+            "cta", "url", "date", "status", "result", "community_rules"]
+    vals = [d.get(k) for k in cols]
+    marks = ",".join(["?"] * len(cols))
+    with tx() as c:
+        r = c.execute("SELECT campaign_id FROM campaigns WHERE campaign_id=?", (d["campaign_id"],)).fetchone()
+        if r:
+            sets = ",".join(k + "=?" for k in cols[1:])
+            c.execute("UPDATE campaigns SET " + sets + ", updated_ts=? WHERE campaign_id=?", vals[1:] + [time.time(), d["campaign_id"]])
+        else:
+            c.execute("INSERT INTO campaigns(" + ",".join(cols) + ",created_ts,updated_ts) VALUES(" + marks + ",?,?)", vals + [time.time(), time.time()])

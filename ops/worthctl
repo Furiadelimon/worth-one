@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -a; . /etc/worth-one/env; set +a
+exec /opt/worth-one/.venv/bin/python /opt/worth-one/server/worthctl.py "$@"

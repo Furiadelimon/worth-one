@@ -1,0 +1,7 @@
+[Unit]
+Description=Worth One daily report
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/worth-one/env
+ExecStart=/usr/local/bin/worth-daily

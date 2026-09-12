@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doomscroll Receipt · How much of your life goes to scrolling?</title>
+<meta name="description" content="Enter how long you scroll per day. Get a receipt: per year, per decade, days of your life. Free screen time life calculator. Screenshot it, compare with a friend.">
+<link rel="canonical" href="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/">
+<meta property="og:title" content="Doomscroll Receipt: your scrolling, itemised"><meta property="og:description" content="2 hours a day is 30 days a year. Get your own receipt in 10 seconds. Free."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og-doomscroll.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='Arial' font-weight='bold'%3E€1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../style.css">
+<script src="../../config.js"></script>
+<script defer src="../../app.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Doomscroll Receipt","applicationCategory":"UtilityApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"},"description":"Screen time life calculator: turns daily scrolling into years, days and reclaimable time, printed as a receipt."}</script>
+</head>
+<body data-drop="DROP-001">
+<div class="wrap">
+<nav class="nav"><a class="brand" href="../../">WORTH ONE?</a><span class="links"><a href="../../#drops">Drops</a><a href="../../about.html">About</a></span></nav>
+
+<section class="hero" style="padding-bottom:8px">
+<h1>Doomscroll Receipt</h1>
+<p class="lead">How long do you scroll per day? Be honest, nobody is watching. Your phone probably knows: Settings → Screen Time / Digital Wellbeing.</p>
+</section>
+
+<section class="card">
+<label for="h"><b>Scrolling per day:</b> <span id="hLbl">2h 30m</span></label>
+<input type="range" id="h" min="0.25" max="12" step="0.25" value="2.5" aria-label="hours per day">
+<div class="row small" style="margin-top:6px"><button class="btn sm ghost" data-p="1">1h</button><button class="btn sm ghost" data-p="2">2h</button><button class="btn sm ghost" data-p="3">3h</button><button class="btn sm ghost" data-p="4">4h</button><button class="btn sm ghost" data-p="6">6h</button></div>
+<div id="cmp" class="note" style="margin-top:12px" hidden></div>
+</section>
+
+<div class="receipt" id="rc">
+ <h3>YOUR LIFE RECEIPT</h3>
+ <div class="c">worth-one · doomscroll receipt · #<span id="rno">0001</span></div>
+ <hr>
+ <div class="ln"><span>Scrolling / day</span><b id="r_day">2h 30m</b></div>
+ <div class="ln"><span>Per week</span><b id="r_week">17h 30m</b></div>
+ <div class="ln"><span>Per year</span><b id="r_year">38 days</b></div>
+ <hr>
+ <div class="ln"><span>Next 5 years</span><b id="r_5">190 days</b></div>
+ <div class="ln"><span>Next 10 years</span><b id="r_10">380 days</b></div>
+ <div class="ln"><span>Next 20 years</span><b id="r_20">2.1 years</b></div>
+ <hr>
+ <div class="ln"><span>10 years of scrolling ≈</span></div>
+ <div id="r_eq" style="font-size:13px;color:#333"></div>
+ <hr>
+ <div class="ln"><span>Your tier</span><b id="r_tier">Regular</b></div>
+ <div class="ln"><span>vs world average*</span><b id="r_avg">+7%</b></div>
+ <hr>
+ <div class="ln tot"><span>TOTAL, 10 YEARS</span><b id="r_tot">1.04 years</b></div>
+ <div class="c" style="margin-top:8px">no refunds · but see below</div>
+</div>
+
+<div class="row" style="justify-content:center;margin:12px 0 4px"><button class="btn acc" id="shareImg">Share my receipt</button><button class="btn ghost" id="cmpBtn">Compare with a friend</button></div>
+<p class="tiny muted" style="text-align:center">Sharing makes an image of your receipt. Nothing is uploaded, it's built on your phone.</p>
+
+<section class="card">
+<h2>The refund department</h2>
+<p>Recover <b><span id="mLbl">30</span> min/day</b> and the receipt changes.</p>
+<input type="range" id="m" min="5" max="180" step="5" value="30" aria-label="minutes recovered per day">
+<div class="fund" style="margin-top:8px">
+<div class="nums" style="grid-template-columns:1fr 1fr"><div><b id="rec_y">7.6 days</b><span>time reclaimed / year</span></div><div><b id="rec_10">76 days</b><span>over 10 years</span></div></div>
+</div>
+<p class="small muted" style="margin-top:10px">That is not a lecture. It's arithmetic. Do with it what you want.</p>
+</section>
+
+<section class="card support"></section>
+
+<p class="tiny muted">*World average time on social media is roughly 2h20/day (DataReportal, Digital 2025). Everything here is arithmetic on the number you typed, not advice about your health.</p>
+
+<footer><a href="../../">Home</a><a href="../../about.html">About</a><a href="../../privacy.html">Privacy</a></footer>
+</div>
+<canvas id="cv" width="1080" height="1350" hidden></canvas>
+<script>
+(function(){
+const $=s=>document.querySelector(s);const h=$('#h'),m=$('#m');
+const fmtH=x=>{const H=Math.floor(x),M=Math.round((x-H)*60);return H?(M?H+'h '+M+'m':H+'h'):M+'m'};
+const fmtD=d=>d<1?Math.round(d*24)+' hours':d<60?(Math.round(d*10)/10).toLocaleString('en')+' days':d<365?Math.round(d)+' days':(Math.round(d/365.25*100)/100).toLocaleString('en')+' years';
+const tiers=[[1,'Light thumb'],[2,'Casual scroller'],[3,'Regular'],[4,'Committed'],[6,'Heavy rotation'],[99,'Professional thumb athlete']];
+const AVG=2.33;let started=false,resultTimer=null,state={};
+function eq(h10){const out=[];const books=Math.round(h10/6);const lotr=Math.round(h10/11.4);const lang=h10/500;const friends=h10/87;
+ out.push('• reading '+books.toLocaleString('en')+' books (6h each)');
+ if(lang>=1)out.push('• learning '+(Math.floor(lang))+' language'+(lang>=2?'s':'')+' to conversational level');
+ out.push('• watching every episode of Friends '+(friends<1?'0.'+Math.round(friends*10):Math.round(friends*10)/10)+' times');
+ out.push('• the extended Lord of the Rings trilogy, '+lotr.toLocaleString('en')+' times');return out}
+function render(){const x=+h.value;const week=x*7,yearH=x*365.25,yearD=yearH/24,d5=yearD*5,d10=yearD*10,d20=yearD*20;const tier=tiers.find(t=>x<t[0])[1];const dif=Math.round((x-AVG)/AVG*100);
+ $('#hLbl').textContent=fmtH(x);$('#r_day').textContent=fmtH(x);$('#r_week').textContent=fmtH(week);$('#r_year').textContent=fmtD(yearD);$('#r_5').textContent=fmtD(d5);$('#r_10').textContent=fmtD(d10);$('#r_20').textContent=fmtD(d20);
+ $('#r_eq').innerHTML=eq(yearH*10).join('<br>');$('#r_tier').textContent=tier;$('#r_avg').textContent=(dif>=0?'+':'')+dif+'%';$('#r_tot').textContent=fmtD(d10);
+ const mm=+m.value,recY=mm/60*365.25/24;$('#mLbl').textContent=mm;$('#rec_y').textContent=fmtD(recY);$('#rec_10').textContent=fmtD(recY*10);
+ state={x,tier,yearD,d10,d20,dif,eq:eq(yearH*10),recY,mm};
+ $('#rno').textContent=String(Math.round(x*100)).padStart(4,'0');
+ clearTimeout(resultTimer);resultTimer=setTimeout(()=>WO&&WO.send('drop_result',{h:x,tier}),900)}
+function start(){if(!started){started=true;WO&&WO.send('drop_start')}}
+h.addEventListener('input',()=>{start();render()});m.addEventListener('input',render);
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{h.value=b.dataset.p;start();render()}));
+// compare mode
+const v=new URLSearchParams(location.search).get('v');if(v&&!isNaN(+v)){const fv=Math.min(12,Math.max(.25,+v));$('#cmp').hidden=false;$('#cmp').innerHTML='<b>Someone sent you their receipt:</b> they scroll <b>'+fmtH(fv)+'/day</b> ('+fmtD(fv*365.25/24)+' a year). Move the slider to see yours, then send it back.'}
+function card(){const c=$('#cv'),g=c.getContext('2d');g.fillStyle='#f6f4ee';g.fillRect(0,0,1080,1350);g.fillStyle='#fff';g.fillRect(90,90,900,1170);g.fillStyle='#111';g.textAlign='center';g.font='bold 54px Menlo,Consolas,monospace';g.fillText('YOUR LIFE RECEIPT',540,190);g.font='28px Menlo,Consolas,monospace';g.fillStyle='#666';g.fillText('doomscroll receipt · worth-one',540,240);
+ const line=(y)=>{g.strokeStyle='#999';g.setLineDash([12,10]);g.beginPath();g.moveTo(140,y);g.lineTo(940,y);g.stroke();g.setLineDash([])};
+ const row=(l,r,y,big)=>{g.fillStyle='#111';g.textAlign='left';g.font=(big?'bold 44px':'34px')+' Menlo,Consolas,monospace';g.fillText(l,150,y);g.textAlign='right';g.font=(big?'bold 44px':'bold 34px')+' Menlo,Consolas,monospace';g.fillText(r,930,y)};
+ line(280);row('Scrolling / day',fmtH(state.x),350);row('Per year',fmtD(state.yearD),410);line(450);row('Next 10 years',fmtD(state.d10),520);row('Next 20 years',fmtD(state.d20),580);line(620);
+ g.fillStyle='#333';g.textAlign='left';g.font='30px Menlo,Consolas,monospace';g.fillText('10 years of scrolling ≈',150,680);state.eq.slice(0,3).forEach((e,i)=>{g.font='28px Menlo,Consolas,monospace';g.fillText(e.slice(0,48),150,730+i*44)});line(880);
+ row('Your tier',state.tier,950);row('vs world average',(state.dif>=0?'+':'')+state.dif+'%',1010);line(1050);row('TOTAL, 10 YEARS',fmtD(state.d10),1130,true);
+ g.fillStyle='#ff4d2e';g.textAlign='center';g.font='bold 30px Menlo,Consolas,monospace';g.fillText('get yours: '+(window.WO_SITE||'').replace('https://','')+'/drops/doomscroll-receipt/',540,1220);
+ return new Promise(res=>c.toBlob(res,'image/png'))}
+$('#shareImg').addEventListener('click',async()=>{const blob=await card();const file=new File([blob],'my-doomscroll-receipt.png',{type:'image/png'});WO.send('share_card',{h:state.x});
+ const ok=await WO.share({text:'My doomscroll receipt: '+fmtH(state.x)+'/day = '+fmtD(state.d10)+' over 10 years. Get yours (free):',params:{v:state.x},file});
+ if(!navigator.canShare||!navigator.canShare({files:[file]})){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-doomscroll-receipt.png';a.click();WO.toast('Receipt image downloaded + link copied')}});
+$('#cmpBtn').addEventListener('click',()=>WO.share({text:'I scroll '+fmtH(state.x)+' a day. What is your receipt?',params:{v:state.x}}));
+render();
+})();
+</script>
+</body>
+</html>

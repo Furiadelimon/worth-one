@@ -1,0 +1,9 @@
+[Unit]
+Description=Worth One autonomous brain run (trends, ideas, content, growth decisions)
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/worth-one/env
+WorkingDirectory=/opt/worth-one
+ExecStart=/usr/local/bin/worth-brain
+TimeoutStartSec=1800

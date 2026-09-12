@@ -1,0 +1,12 @@
+[Unit]
+Description=Worth One public tunnel (Cloudflare quick tunnel, no account; replaced by a real domain later)
+After=network-online.target worth-one.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8080 --logfile /var/log/worth-tunnel.log --loglevel info
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

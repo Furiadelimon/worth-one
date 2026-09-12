@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Worth One · Control Center</title>
+<style>
+:root{--bg:#0b0d10;--panel:#14181d;--line:#232a32;--tx:#e6e9ee;--mut:#8b95a3;--acc:#ffd166;--ok:#4cd982;--bad:#ff6b6b;--blue:#5aa9ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:16px}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:12px;letter-spacing:.12em;color:var(--mut);margin:0 0 10px;text-transform:uppercase}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.wide{grid-column:1/-1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.kpi{background:#0f1216;border:1px solid var(--line);border-radius:8px;padding:10px}
+.kpi b{display:block;font-size:22px;font-weight:600}.kpi span{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.kpi.acc b{color:var(--acc)}.kpi.ok b{color:var(--ok)}.kpi.bad b{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--mut);font-weight:500;padding:4px 6px;border-bottom:1px solid var(--line)}td{padding:5px 6px;border-bottom:1px solid #1b2128;vertical-align:top}
+.tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;border:1px solid var(--line);color:var(--mut)}
+.tag.LIVE,.tag.ACTIVE,.tag.GROWING,.tag.VIRAL,.tag.done{color:var(--ok);border-color:var(--ok)}.tag.PAUSED,.tag.prepared,.tag.access_required{color:var(--acc);border-color:var(--acc)}.tag.KILLED,.tag.failed{color:var(--bad);border-color:var(--bad)}
+.feed li{list-style:none;padding:6px 0;border-bottom:1px solid #1b2128}.feed{margin:0;padding:0;max-height:520px;overflow:auto}.feed time{color:var(--mut);margin-right:8px}.feed .ch{color:var(--blue);margin-right:8px}
+.alert{background:#2a1f10;border:1px solid var(--acc);border-radius:8px;padding:10px;margin-bottom:8px}.alert b{color:var(--acc)}
+.cmd{display:flex;gap:6px;flex-wrap:wrap}.cmd input,.cmd select,.cmd button{background:#0f1216;color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}.cmd button{background:var(--acc);color:#111;font-weight:600;cursor:pointer}
+.bar{height:10px;background:#0f1216;border-radius:99px;overflow:hidden;border:1px solid var(--line)}.bar i{display:block;height:100%;background:var(--ok)}
+.muted{color:var(--mut)}.small{font-size:12px}pre{white-space:pre-wrap;font-size:12px;background:#0f1216;padding:10px;border-radius:8px;max-height:420px;overflow:auto}
+.spark{display:flex;align-items:flex-end;gap:2px;height:48px}.spark i{flex:1;background:var(--blue);min-height:1px;border-radius:2px 2px 0 0}
+a{color:var(--blue)}
+</style></head><body>
+<div class="top"><div><h1>PROJECT WORTH ONE · CONTROL CENTER</h1><div class="muted small" id="meta">loading…</div></div>
+<div id="statusTag"></div></div>
+
+<div id="alerts"></div>
+
+<div class="grid">
+ <div class="panel wide"><h2>Car fund</h2><div id="fund"></div></div>
+ <div class="panel wide"><h2>Key metrics · all time / 7d / 24h</h2><div class="kpis" id="kpis"></div></div>
+ <div class="panel"><h2>Agent</h2><div id="agent"></div></div>
+ <div class="panel"><h2>Human override</h2>
+  <div class="cmd"><select id="cmdSel">
+   <option>PAUSE ALL</option><option>RESUME ALL</option><option>PAUSE DROP</option><option>RESUME DROP</option><option>KILL DROP</option><option>SCALE DROP</option>
+   <option>PAUSE CHANNEL</option><option>RESUME CHANNEL</option><option>BLOCK CHANNEL</option><option>UNBLOCK CHANNEL</option><option>BLOCK COUNTRY</option><option>UNBLOCK COUNTRY</option>
+   <option>CHANGE CAR TARGET</option><option>CHANGE PRIORITY</option><option>ENABLE PAYMENTS</option><option>DISABLE PAYMENTS</option><option>SET REAL CONTRIBUTIONS</option><option>RESOLVE ACTION</option><option>SET</option>
+  </select><input id="cmdArg" placeholder="argument (DROP-001, reddit, ES, 15000…)"><button onclick="sendCmd()">Run</button></div>
+  <div id="cmdOut" class="small muted" style="margin-top:8px"></div>
+  <div class="small muted" style="margin-top:8px">Paused channels: <span id="paused"></span><br>Blocked channels: <span id="blocked"></span><br>Blocked countries: <span id="bcountries"></span></div>
+ </div>
+ <div class="panel"><h2>Daily users · 14d</h2><div class="spark" id="spark"></div><div class="small muted" id="sparkLbl"></div></div>
+ <div class="panel"><h2>AI cost</h2><div id="aicost"></div></div>
+ <div class="panel wide"><h2>Drops</h2><div style="overflow:auto"><table id="drops"></table></div></div>
+ <div class="panel"><h2>Top channels · all time</h2><table id="channels"></table></div>
+ <div class="panel"><h2>Countries reached</h2><table id="countries"></table></div>
+ <div class="panel wide"><h2>Campaigns</h2><div style="overflow:auto"><table id="campaigns"></table></div></div>
+ <div class="panel wide"><h2>Activity feed</h2><ul class="feed" id="feed"></ul></div>
+ <div class="panel"><h2>Ready-to-support signals</h2><table id="supporters"></table></div>
+ <div class="panel"><h2>Daily reports</h2><div id="reports"></div><pre id="reportBody" hidden></pre></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const t=ts=>ts?new Date(ts*1000).toLocaleString('es-ES',{hour12:false}):'';const hm=ts=>new Date(ts*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+const pct=x=>(100*(x||0)).toFixed(1)+'%';
+async function load(){const r=await fetch('/admin/api/state');if(!r.ok){$('#meta').textContent='auth error '+r.status;return}const s=await r.json();render(s)}
+function kpi(l,v,c){return `<div class="kpi ${c||''}"><b>${v}</b><span>${l}</span></div>`}
+function render(s){const st=s.settings,f=s.fund,a=s.all,d7=s.d7,d1=s.d1;
+ $('#meta').textContent='updated '+t(s.now)+' · site '+(st.PUBLIC_URL||'-')+' · api '+(st.API_URL||'-');
+ $('#statusTag').innerHTML=`<span class="tag ${st.PROJECT_STATUS}">PROJECT ${st.PROJECT_STATUS}</span> <span class="tag">PAYMENTS ${st.PAYMENTS_ENABLED==='true'?'ON':'OFF'}</span> <span class="tag">PRIORITY ${esc(st.PRIORITY)}</span>`;
+ $('#alerts').innerHTML=s.human_actions.map(h=>`<div class="alert"><b>HUMAN ACTION REQUIRED #${h.id}</b> · ${esc(h.title)}<div class="small">${esc(h.detail)}</div></div>`).join('');
+ $('#fund').innerHTML=`<div class="kpis">${kpi('REAL contributions','€'+f.real.toFixed(2)+' / €'+f.car_target.toFixed(0),'ok')}${kpi('People "worth €1+"',f.people_worth_1plus,'acc')}${kpi('Intended value (not money)','€'+f.intended_value.toFixed(0),'acc')}${kpi('Ready to support (emails)',f.ready_to_support,'acc')}${kpi('"Not worth €1"',f.not_worth)}</div><div class="bar" style="margin-top:10px"><i style="width:${Math.min(100,f.real_pct)}%"></i></div><div class="small muted">Real: ${f.real_pct}% of target. Intent is never counted as money.</div>`;
+ const row=(l,k,fmt)=>kpi(l,`${fmt(a[k])} <span class="muted small">/ ${fmt(d7[k])} / ${fmt(d1[k])}</span>`);
+ const n=x=>x??0;
+ $('#kpis').innerHTML=row('Traffic (views)','page_views',n)+row('Users','users',n)+row('New users','new_users',n)+row('Drop results','drop_results',n)+row('Sharers','shares',n)+row('Share rate','share_rate',pct)+row('Referral new users','referral_new_users',n)+row('K (viral coef.)','k',x=>(x||0).toFixed(2))+kpi('Countries',s.countries.length)+kpi('Repeat users',a.repeat_users)+kpi('Active drops',s.drops.filter(d=>['LIVE','GROWING','VIRAL','TESTING'].includes(d.status)).length)+kpi('Active campaigns',s.campaigns.filter(c=>c.status==='live').length);
+ const lr=s.runs[0];$('#agent').innerHTML=`<div><b>CURRENT ACTION</b><br>${esc(st.CURRENT_ACTION)}</div><div style="margin-top:6px"><b>NEXT ACTION</b><br>${esc(st.NEXT_ACTION)}</div><div style="margin-top:6px"><b>NEXT AUTONOMOUS RUN</b><br>${st.NEXT_AUTONOMOUS_RUN?t(+st.NEXT_AUTONOMOUS_RUN):'not scheduled (brain not authorized yet)'}</div><div style="margin-top:6px"><b>LAST RUN</b><br>${lr?esc(lr.kind)+' · <span class="tag '+esc(lr.status)+'">'+esc(lr.status)+'</span> '+t(lr.ts)+'<br><span class="small muted">'+esc(lr.summary)+'</span>':'none'}</div>`;
+ const L=k=>{try{return JSON.parse(st[k]||'[]').join(', ')||'-'}catch(e){return '-'}};$('#paused').textContent=L('PAUSED_CHANNELS');$('#blocked').textContent=L('BLOCKED_CHANNELS');$('#bcountries').textContent=L('BLOCKED_COUNTRIES');
+ const mx=Math.max(1,...s.series.map(x=>x.users));$('#spark').innerHTML=s.series.map(x=>`<i title="${x.day}: ${x.users} users, ${x.shares} shares" style="height:${Math.max(2,100*x.users/mx)}%"></i>`).join('');$('#sparkLbl').textContent=s.series.length?`${s.series[0].day} → ${s.series.at(-1).day}, max ${mx}`:'no data yet';
+ const c=s.ai_cost;$('#aicost').innerHTML=`<div class="kpis">${kpi('24h','$'+c.d1.usd.toFixed(3))}${kpi('30d','$'+c.d30.usd.toFixed(3))}${kpi('all','$'+c.all.usd.toFixed(3))}${kpi('runs',c.all.runs)}</div><div class="small muted" style="margin-top:6px">Tokens all time: ${c.all.i} in / ${c.all.o} out</div>`;
+ const dm=Object.fromEntries(s.drops_metrics.map(x=>[x.drop_id,x]));
+ $('#drops').innerHTML='<tr><th>id</th><th>name</th><th>status</th><th>score</th><th>users</th><th>results</th><th>share rate</th><th>intent rate</th><th>intended €</th><th>mechanism</th></tr>'+s.drops.map(d=>{const m=dm[d.drop_id]||{};return `<tr><td>${esc(d.drop_id)}</td><td>${esc(d.name)}<div class="small muted">${esc((d.concept||'').slice(0,120))}</div></td><td><span class="tag ${esc(d.status)}">${esc(d.status)}</span></td><td>${(d.score||0).toFixed(1)}</td><td>${m.users||0}</td><td>${m.results||0}</td><td>${pct(m.share_rate)}</td><td>${pct(m.intent_rate)}</td><td>${(m.intended_value||0).toFixed(0)}</td><td class="small muted">${esc(d.viral_mechanism)}</td></tr>`}).join('');
+ $('#channels').innerHTML='<tr><th>channel</th><th>users</th><th>shares</th><th>intents</th></tr>'+s.channels.map(x=>`<tr><td>${esc(x.channel)}</td><td>${x.users}</td><td>${x.shares}</td><td>${x.intents}</td></tr>`).join('');
+ $('#countries').innerHTML='<tr><th>country</th><th>users</th><th>shares</th><th>intents</th></tr>'+s.countries.map(x=>`<tr><td>${esc(x.country)}</td><td>${x.users}</td><td>${x.shares}</td><td>${x.intents}</td></tr>`).join('')||'<tr><td class="muted">no visitors yet</td></tr>';
+ $('#campaigns').innerHTML='<tr><th>id</th><th>drop</th><th>platform</th><th>country/lang</th><th>status</th><th>hypothesis</th><th>url</th><th>visitors</th><th>shares</th><th>intent</th><th>result</th></tr>'+s.campaigns.map(x=>`<tr><td>${esc(x.campaign_id)}</td><td>${esc(x.drop_id)}</td><td>${esc(x.platform)}<div class="small muted">${esc(x.account)}</div></td><td>${esc(x.country)}/${esc(x.language)}</td><td><span class="tag ${esc(x.status)}">${esc(x.status)}</span></td><td class="small">${esc(x.hypothesis)}</td><td class="small">${x.url?`<a href="${esc(x.url)}" target="_blank">link</a>`:'-'}</td><td>${x.visitors}</td><td>${x.shares}</td><td>${x.support_intent}</td><td class="small muted">${esc(x.result)}</td></tr>`).join('');
+ $('#feed').innerHTML=s.activity.map(x=>`<li><time>${hm(x.ts)}</time><span class="ch">${esc(x.channel)}</span>${esc(x.message)}${x.drop_id?' <span class="tag">'+esc(x.drop_id)+'</span>':''}</li>`).join('');
+ $('#supporters').innerHTML='<tr><th>when</th><th>amount</th><th>drop</th><th>country</th><th>email</th></tr>'+(s.supporters.map(x=>`<tr><td>${t(x.ts)}</td><td>€${x.amount}</td><td>${esc(x.drop_id)}</td><td>${esc(x.country)}</td><td>${esc(x.email)}</td></tr>`).join('')||'<tr><td class="muted" colspan=5>none yet</td></tr>');
+ $('#reports').innerHTML=s.reports.map(r=>`<a href="#" onclick="showReport('${r.day}');return false">${r.day}</a>`).join(' · ')||'<span class="muted">first report at 00:05 UTC</span>';
+}
+async function showReport(day){const r=await fetch('/admin/api/report/'+day);$('#reportBody').hidden=false;$('#reportBody').textContent=await r.text()}
+async function sendCmd(){const cmd=$('#cmdSel').value,arg=$('#cmdArg').value;if(!confirm(cmd+' '+arg+' ?'))return;const r=await fetch('/admin/cmd',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cmd,arg})});const j=await r.json();$('#cmdOut').textContent=j.msg||j.detail||JSON.stringify(j);load()}
+load();setInterval(load,30000);
+</script></body></html>

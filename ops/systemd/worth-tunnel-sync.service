@@ -1,0 +1,7 @@
+[Unit]
+Description=Worth One: publish current tunnel URL to the site config (GitHub Pages)
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/worth-one/env
+ExecStart=/usr/local/bin/worth-tunnel-sync
