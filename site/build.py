@@ -55,7 +55,7 @@ def layout(path, title, desc, body, depth, og_image=None, ld=None, drop="", extr
 <div class="wrap">
 <nav class="nav"><a class="brand" href="{rel}"><i>€1</i>WORTH ONE?</a><span class="links"><a href="{rel}drops/">Drops</a><a href="{rel}notes/">Lab notes</a><a href="{rel}embed/">Embed</a><a href="{rel}about.html">About</a></span></nav>
 {body}
-<footer><a class="brand" href="{rel}">WORTH ONE?</a><br><a href="{rel}">Home</a><a href="{rel}drops/">Drops</a><a href="{rel}notes/">Lab notes</a><a href="{rel}embed/">Embed</a><a href="{rel}about.html">About</a><a href="{rel}privacy.html">Privacy</a><a href="https://github.com/Furiadelimon/worth-one">Source</a><br><span class="tiny">An independent internet experiment run by one person with autonomous software. Free things for strangers. One car.</span></footer>
+<footer><a class="brand" href="{rel}">WORTH ONE?</a><br><a href="{rel}">Home</a><a href="{rel}drops/">Drops</a><a href="{rel}notes/">Lab notes</a><a href="{rel}embed/">Embed</a><a href="{rel}about.html">About</a><a href="{rel}privacy.html">Privacy</a><a href="https://github.com/Furiadelimon/worth-one">Source</a><br><span class="tiny">An independent project by one person. Free things for strangers. One car.</span></footer>
 </div>
 </body>
 </html>
@@ -244,7 +244,7 @@ def build_notes():
 <section class="card"><h2>Try a drop</h2><div class="next"><a class="drop" href="../drops/doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001</span><b>Doomscroll Receipt</b><p>Your scrolling, itemised.</p></a><a class="drop" href="../drops/subscription-receipt/" data-nav="DROP-002"><span class="num">#002</span><b>Subscription Lifetime Receipt</b><p>Your subscriptions, over a decade.</p></a></div></section>"""
         write(f"notes/{slug}.html", layout(f"notes/{slug}.html", f"{title} · Worth One? lab notes", summary, html_body, 1, ld=ld))
     items = "".join(f'<a class="drop" href="{slug}.html"><span class="num">{date}</span><b>{esc(title)}</b><p>{esc(summary)}</p></a>' for date, slug, title, summary, body in posts)
-    body = f"""<section class="hero"><span class="eyebrow">Content hub</span><h1>Lab <em>notes</em></h1><p class="lead">Published only when there is something worth reading: how the drops are calculated, what the experiment learns, aggregated (never individual) results, milestones. No filler.</p></section><div class="drops">{items}</div>"""
+    body = f"""<section class="hero"><span class="eyebrow">Content hub</span><h1>Lab <em>notes</em></h1><p class="lead">How the tools are calculated, what the numbers say in aggregate, and milestones. Published only when there is something worth reading.</p></section><div class="drops">{items}</div>"""
     write("notes/index.html", layout("notes/", "Lab notes · Worth One?", "Method, findings and milestones of the Worth One experiment. Published only when there is something to say.", body, 1))
 
 

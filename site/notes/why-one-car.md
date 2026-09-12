@@ -16,7 +16,7 @@ Because it is true, and because a true small goal is better than a fake noble on
 
 ## Why the person is not named
 
-The project should be judged on whether the tools are worth it, not on who made them. So the public identity is the project itself, WORTH ONE?, and the person behind it stays unnamed. This is privacy, not deception: everything else about the experiment, including how it grows and what it earns, is published.
+The tools should be judged on whether they are worth it, not on who made them. So the public identity is the project itself, WORTH ONE?, and the person behind it stays unnamed.
 
 ## What it is not
 
@@ -27,7 +27,7 @@ The project should be judged on whether the tools are worth it, not on who made 
 
 ## How it grows
 
-Without social media accounts. The drops are built to be worth sharing (a personal, slightly ridiculous receipt), they show up in search for the questions they answer, they can be [embedded](../embed/) on other sites for free, and they are offered to newsletters and resource pages that already cover the topic. Every step is recorded in the open. The rules: no spam, no fake accounts, no bought attention, no fake results, no simulated donations.
+By being worth sending to someone. No ads, no bought attention. If a tool is useful it travels; if not, it is removed.
 
 ## The bet
 
