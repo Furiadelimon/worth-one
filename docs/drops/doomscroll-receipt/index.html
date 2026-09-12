@@ -90,8 +90,8 @@ function render(){const x=+h.value;const week=x*7,yearH=x*365.25,yearD=yearH/24,
  const mm=+m.value,recY=mm/60*365.25/24;$('#mLbl').textContent=mm;$('#rec_y').textContent=fmtD(recY);$('#rec_10').textContent=fmtD(recY*10);
  state={x,tier,yearD,d10,d20,dif,eq:eq(yearH*10),recY,mm};
  $('#rno').textContent=String(Math.round(x*100)).padStart(4,'0');
- clearTimeout(resultTimer);resultTimer=setTimeout(()=>WO&&WO.send('drop_result',{h:x,tier}),900)}
-function start(){if(!started){started=true;WO&&WO.send('drop_start')}}
+ clearTimeout(resultTimer);resultTimer=setTimeout(()=>window.WO&&window.WO.send('drop_result',{h:x,tier}),900)}
+function start(){if(!started){started=true;window.WO&&window.WO.send('drop_start')}}
 h.addEventListener('input',()=>{start();render()});m.addEventListener('input',render);
 document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{h.value=b.dataset.p;start();render()}));
 // compare mode

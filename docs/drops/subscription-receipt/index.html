@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subscription Lifetime Receipt · What your subscriptions really cost over 10 years</title>
+<meta name="description" content="Tap your subscriptions, get a receipt: per month, per year, 10 years, 20 years, and what that money is in real things. Free subscription cost calculator, no sign-up.">
+<link rel="canonical" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/">
+<meta property="og:title" content="Subscription Lifetime Receipt"><meta property="og:description" content="Netflix + Spotify + gym + cloud = a used car in 10 years. Get your receipt in 20 seconds. Free."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='Arial' font-weight='bold'%3E€1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../style.css">
+<script src="../../config.js"></script>
+<script defer src="../../app.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Subscription Lifetime Receipt","applicationCategory":"FinanceApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"},"description":"Subscription cost calculator that prints the 1, 5, 10 and 20 year cost of your subscriptions as a receipt."}</script>
+<style>
+.subs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sub{border:2px solid var(--line);border-radius:12px;padding:10px;background:#fff;cursor:pointer;user-select:none}.sub.on{border-color:var(--ink);background:#151515;color:#fff}
+.sub b{display:block;font-size:15px}.sub input{width:70px;font:inherit;font-size:14px;padding:3px 6px;border-radius:6px;border:1px solid #cfc9bc;margin-top:4px;background:#fff;color:#111}.sub.on input{background:#2a2a2a;color:#fff;border-color:#555}
+.cur{display:flex;gap:6px}.cur button{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}.cur button.on{background:var(--ink);color:#fff}
+</style>
+</head>
+<body data-drop="DROP-002">
+<div class="wrap">
+<nav class="nav"><a class="brand" href="../../">WORTH ONE?</a><span class="links"><a href="../../#drops">Drops</a><a href="../../about.html">About</a></span></nav>
+
+<section class="hero" style="padding-bottom:8px">
+<h1>Subscription Lifetime Receipt</h1>
+<p class="lead">Tap what you pay for. Fix the prices if yours differ. The receipt prints what it costs over ten and twenty years, and what that money is in real things.</p>
+</section>
+
+<section class="card">
+<div class="row" style="justify-content:space-between;margin-bottom:10px"><b>Your subscriptions (per month)</b><div class="cur"><button data-c="€" class="on">€</button><button data-c="$">$</button><button data-c="£">£</button></div></div>
+<div class="subs" id="subs"></div>
+<div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addBtn">+ add your own</button></div>
+<div id="cmp" class="note" style="margin-top:12px" hidden></div>
+</section>
+
+<div class="receipt" id="rc">
+ <h3>SUBSCRIPTION RECEIPT</h3>
+ <div class="c">worth-one · lifetime edition · #<span id="rno">0000</span></div>
+ <hr>
+ <div id="r_items"></div>
+ <hr>
+ <div class="ln"><span>Per month</span><b id="r_m">0</b></div>
+ <div class="ln"><span>Per year</span><b id="r_y">0</b></div>
+ <hr>
+ <div class="ln"><span>5 years</span><b id="r_5">0</b></div>
+ <div class="ln"><span>10 years</span><b id="r_10">0</b></div>
+ <div class="ln"><span>20 years</span><b id="r_20">0</b></div>
+ <hr>
+ <div class="ln"><span>10 years buys ≈</span></div>
+ <div id="r_eq" style="font-size:13px;color:#333"></div>
+ <hr>
+ <div class="ln"><span>Your tier</span><b id="r_tier">-</b></div>
+ <div class="ln tot"><span>TOTAL, 10 YEARS</span><b id="r_tot">0</b></div>
+ <div class="c" style="margin-top:8px">auto-renews · like everything else</div>
+</div>
+
+<div class="row" style="justify-content:center;margin:12px 0 4px"><button class="btn acc" id="shareImg">Share my receipt</button><button class="btn ghost" id="cmpBtn">Compare with someone</button></div>
+<p class="tiny muted" style="text-align:center">The image is built on your device. Nothing you type is uploaded.</p>
+
+<section class="card">
+<h2>The cancel department</h2>
+<p>Untick one thing above and watch the 10-year line. That's the whole trick. No advice, just the number you were never shown.</p>
+<p class="small muted">Prices are typical 2026 list prices and are only defaults; edit them. No inflation, no investing, no "if you had bought Bitcoin". Just what you pay.</p>
+</section>
+
+<section class="card support"></section>
+
+<footer><a href="../../">Home</a><a href="../../about.html">About</a><a href="../../privacy.html">Privacy</a></footer>
+</div>
+<canvas id="cv" width="1080" height="1350" hidden></canvas>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const DEF=[["Netflix",13.99,1],["Spotify",10.99,1],["YouTube Premium",12.99,0],["Disney+",9.99,0],["Amazon Prime",4.99,1],["Apple Music",10.99,0],["HBO Max",9.99,0],["iCloud / Google One",2.99,1],["ChatGPT / AI",20,0],["Gym",35,1],["PlayStation / Xbox",9.99,0],["Dating app",20,0],["News / magazine",10,0],["Meal kit",60,0],["Adobe / software",25,0],["Phone plan",20,0]];
+let cur="€";let subs=DEF.map(([n,p,on])=>({n,p,on:!!on}));
+function fmt(v){return cur+Math.round(v).toLocaleString("en")}
+const tiers=[[25,"Minimalist"],[60,"Streaming citizen"],[120,"Bundle enjoyer"],[200,"Recurring revenue hero"],[1e9,"The landlord's favourite tenant"]];
+function draw(){$("#subs").innerHTML=subs.map((s,i)=>`<div class="sub ${s.on?"on":""}" data-i="${i}"><b>${s.n}</b><span class="small">${cur}</span><input type="number" step="0.01" min="0" value="${s.p}" data-i="${i}" aria-label="${s.n} monthly price"></div>`).join("");
+ $("#subs").querySelectorAll(".sub").forEach(el=>el.addEventListener("click",e=>{if(e.target.tagName==="INPUT")return;subs[+el.dataset.i].on=!subs[+el.dataset.i].on;start();draw();render()}));
+ $("#subs").querySelectorAll("input").forEach(inp=>{inp.addEventListener("input",()=>{subs[+inp.dataset.i].p=+inp.value||0;subs[+inp.dataset.i].on=true;inp.closest(".sub").classList.add("on");start();render()});inp.addEventListener("click",e=>e.stopPropagation())})}
+let started=false,timer=null,state={};
+function start(){if(!started){started=true;window.WO&&window.WO.send("drop_start")}}
+function render(){const on=subs.filter(s=>s.on&&s.p>0);const m=on.reduce((a,s)=>a+s.p,0),y=m*12,y10=y*10;
+ $("#r_items").innerHTML=on.map(s=>`<div class="ln"><span>${s.n}</span><b>${cur}${s.p.toFixed(2)}</b></div>`).join("")||'<div class="c">nothing selected</div>';
+ $("#r_m").textContent=fmt(m);$("#r_y").textContent=fmt(y);$("#r_5").textContent=fmt(y*5);$("#r_10").textContent=fmt(y10);$("#r_20").textContent=fmt(y*20);$("#r_tot").textContent=fmt(y10);
+ const eq=[`• ${(y10/15000*100).toFixed(0)}% of a used car (${cur}15,000)`,`• ${Math.round(y10/3).toLocaleString("en")} coffees at ${cur}3`,`• ${Math.round(y10/80).toLocaleString("en")} weeks of groceries at ${cur}80`,`• ${(y10/1200).toFixed(1)} return flights at ${cur}1,200`];
+ $("#r_eq").innerHTML=eq.join("<br>");const tier=tiers.find(t=>m<t[0])[1];$("#r_tier").textContent=tier;$("#rno").textContent=String(Math.round(m)).padStart(4,"0");
+ state={m,y,y10,y20:y*20,tier,eq,n:on.length,items:on};
+ clearTimeout(timer);timer=setTimeout(()=>window.WO&&window.WO.send("drop_result",{m:Math.round(m),n:on.length,tier}),900)}
+document.querySelectorAll(".cur button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".cur button").forEach(x=>x.classList.remove("on"));b.classList.add("on");cur=b.dataset.c;draw();render()}));
+$("#addBtn").addEventListener("click",()=>{const n=prompt("Name of the subscription?");if(!n)return;const p=+prompt("Price per month?","9.99")||0;subs.push({n:n.slice(0,24),p,on:true});start();draw();render()});
+const v=new URLSearchParams(location.search).get("t");if(v&&!isNaN(+v)){$("#cmp").hidden=false;$("#cmp").innerHTML=`<b>Someone sent you their receipt:</b> they pay about <b>${cur}${Math.round(+v)}/month</b> (${cur}${Math.round(+v*120).toLocaleString("en")} over 10 years). Build yours and send it back.`}
+function card(){const c=$("#cv"),g=c.getContext("2d");g.fillStyle="#f6f4ee";g.fillRect(0,0,1080,1350);g.fillStyle="#fff";g.fillRect(90,90,900,1170);g.textAlign="center";g.fillStyle="#111";g.font="bold 50px Menlo,Consolas,monospace";g.fillText("SUBSCRIPTION RECEIPT",540,190);g.font="28px Menlo,Consolas,monospace";g.fillStyle="#666";g.fillText("lifetime edition · worth-one",540,240);
+ const line=y=>{g.strokeStyle="#999";g.setLineDash([12,10]);g.beginPath();g.moveTo(140,y);g.lineTo(940,y);g.stroke();g.setLineDash([])};
+ const row=(l,r,y,big)=>{g.fillStyle="#111";g.textAlign="left";g.font=(big?"bold 44px":"32px")+" Menlo,Consolas,monospace";g.fillText(l,150,y);g.textAlign="right";g.font=(big?"bold 44px":"bold 32px")+" Menlo,Consolas,monospace";g.fillText(r,930,y)};
+ line(280);let y=340;state.items.slice(0,7).forEach(s=>{row(s.n.slice(0,22),cur+s.p.toFixed(2),y);y+=46});if(state.items.length>7){row("+"+(state.items.length-7)+" more","",y);y+=46}
+ line(y);y+=60;row("Per year",fmt(state.y),y);y+=52;row("10 years",fmt(state.y10),y);y+=52;row("20 years",fmt(state.y20),y);y+=30;line(y);y+=56;
+ g.fillStyle="#333";g.textAlign="left";g.font="28px Menlo,Consolas,monospace";g.fillText("10 years buys ≈",150,y);y+=42;state.eq.slice(0,3).forEach(e=>{g.fillText(e.slice(0,46),150,y);y+=40});line(y+8);y+=66;
+ row("Your tier",state.tier.slice(0,26),y);y+=64;row("TOTAL, 10 YEARS",fmt(state.y10),y,true);
+ g.fillStyle="#ff4d2e";g.textAlign="center";g.font="bold 28px Menlo,Consolas,monospace";g.fillText("get yours: "+(window.WO_SITE||"").replace("https://","")+"/drops/subscription-receipt/",540,1220);
+ return new Promise(res=>c.toBlob(res,"image/png"))}
+$("#shareImg").addEventListener("click",async()=>{const blob=await card();const file=new File([blob],"my-subscription-receipt.png",{type:"image/png"});WO.send("share_card",{m:Math.round(state.m)});
+ await WO.share({text:"My subscriptions cost "+fmt(state.y10)+" over 10 years. Get your receipt (free):",params:{t:Math.round(state.m)},file});
+ if(!navigator.canShare||!navigator.canShare({files:[file]})){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="my-subscription-receipt.png";a.click();WO.toast("Receipt image downloaded + link copied")}});
+$("#cmpBtn").addEventListener("click",()=>WO.share({text:"I pay "+fmt(state.m)+"/month in subscriptions. What is your receipt?",params:{t:Math.round(state.m)}}));
+draw();render();
+})();
+</script>
+</body>
+</html>

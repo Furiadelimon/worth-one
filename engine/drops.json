@@ -23,7 +23,7 @@
     "drop_id": "DROP-002",
     "name": "Subscription Lifetime Receipt",
     "slug": "subscription-receipt",
-    "status": "IDEA",
+    "status": "LIVE",
     "concept": "Pick your subscriptions (streaming, music, cloud, gym, apps). See the true 1/5/10-year cost and what that money is in concrete things. Receipt format, shareable.",
     "target_audience": "18-45, money-conscious, global",
     "emotion": "shock, guilt-free clarity",
@@ -37,7 +37,7 @@
     "expected_value": "high utility + high shareability; strong SEO ('subscription cost calculator')",
     "monetization_relation": "money-context makes 'worth 1 EUR' natural",
     "score": 8.6,
-    "notes": "Next build candidate. Reuses receipt engine from DROP-001."
+    "notes": "Built 2026-09-12. Reuses receipt engine from DROP-001."
   },
   {
     "drop_id": "DROP-003",

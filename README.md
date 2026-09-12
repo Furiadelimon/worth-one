@@ -14,8 +14,8 @@ Site: https://furiadelimon.github.io/worth-one/
 | id | name | status |
 |---|---|---|
 | DROP-001 | [Doomscroll Receipt](https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/) | live |
-| DROP-002 | Subscription Lifetime Receipt | next |
-| DROP-003 | Weekends Left | idea |
+| DROP-002 | [Subscription Lifetime Receipt](https://furiadelimon.github.io/worth-one/drops/subscription-receipt/) | live |
+| DROP-003 | Weekends Left | next |
 
 Suggest one: open an issue.
 

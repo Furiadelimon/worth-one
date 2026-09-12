@@ -117,5 +117,22 @@
     "status": "prepared",
     "community_rules": "Maker must post; no vote-asking outside guidelines.",
     "result": "hold until 3 drops"
+  },
+  {
+    "campaign_id": "CMP-20260912-08",
+    "drop_id": "DROP-002",
+    "platform": "seo",
+    "account": "GitHub Pages (authorized)",
+    "country": "GLOBAL",
+    "language": "en",
+    "audience": "searches: subscription cost calculator, how much do I spend on subscriptions",
+    "hypothesis": "Money-context searches convert better to 'worth 1 EUR' than time-context ones.",
+    "content": "Landing page with schema.org FinanceApplication, sitemap, IndexNow.",
+    "cta": "Get your receipt",
+    "url": "https://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=search",
+    "date": "2026-09-12",
+    "status": "live",
+    "community_rules": "n/a",
+    "result": ""
   }
 ]
