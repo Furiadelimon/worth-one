@@ -104,8 +104,7 @@ def notify(text):
     tok, chat = os.environ.get("WORTH_TG_TOKEN"), os.environ.get("WORTH_TG_CHAT")
     if tok and chat:
         try:
-            data = json.dumps({"chat_id": chat, "text": "WORTH ONE?
-" + text[:3800], "disable_web_page_preview": True}).encode("utf-8")
+            data = json.dumps({"chat_id": chat, "text": "WORTH ONE?\n" + text[:3800], "disable_web_page_preview": True}).encode("utf-8")
             req = urllib.request.Request(f"https://api.telegram.org/bot{tok}/sendMessage", data=data, headers={"Content-Type": "application/json"})
             urllib.request.urlopen(req, timeout=10)
             sent = True
