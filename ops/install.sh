@@ -33,7 +33,9 @@ for u in worth-one.service worth-tunnel.service worth-tunnel-sync.service worth-
   install -m 644 "$APP/ops/systemd/$u" /etc/systemd/system/$u
 done
 systemctl daemon-reload
-systemctl enable --now worth-one.service worth-tunnel.service worth-tunnel-sync.timer worth-daily.timer worth-brain.timer
+systemctl enable --now worth-one.service worth-daily.timer worth-brain.timer
+# Public ingress (Cloudflare quick tunnel) is only enabled when Pedro explicitly asks for it: ENABLE_TUNNEL=1 bash ops/install.sh
+if [ "${ENABLE_TUNNEL:-0}" = "1" ]; then systemctl enable --now worth-tunnel.service worth-tunnel-sync.timer; fi
 systemctl restart worth-one.service
 sleep 2
 set -a; . "$ENVF"; set +a
