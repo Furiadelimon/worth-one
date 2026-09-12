@@ -99,13 +99,24 @@ def run(cmd, arg="", actor="system"):
 
 
 def notify(text):
-    """Push a message to the owner via ntfy.sh if WORTH_NTFY_TOPIC is set. Free, no account, phone app."""
+    """Push a message to the owner: Telegram bot (WORTH_TG_TOKEN + WORTH_TG_CHAT) and/or ntfy.sh (WORTH_NTFY_TOPIC)."""
+    sent = False
+    tok, chat = os.environ.get("WORTH_TG_TOKEN"), os.environ.get("WORTH_TG_CHAT")
+    if tok and chat:
+        try:
+            data = json.dumps({"chat_id": chat, "text": "WORTH ONE?
+" + text[:3800], "disable_web_page_preview": True}).encode("utf-8")
+            req = urllib.request.Request(f"https://api.telegram.org/bot{tok}/sendMessage", data=data, headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=10)
+            sent = True
+        except Exception:
+            pass
     topic = os.environ.get("WORTH_NTFY_TOPIC")
-    if not topic:
-        return False
-    try:
-        req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=text.encode("utf-8"), headers={"Title": "Worth One"})
-        urllib.request.urlopen(req, timeout=8)
-        return True
-    except Exception:
-        return False
+    if topic:
+        try:
+            req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=text.encode("utf-8"), headers={"Title": "Worth One"})
+            urllib.request.urlopen(req, timeout=8)
+            sent = True
+        except Exception:
+            pass
+    return sent
