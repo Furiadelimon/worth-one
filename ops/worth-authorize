@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Saves a Claude Code long-lived token for the autonomous brain, after validating it against the API.
+# Usage: worth-authorize <token>     (token comes from: claude setup-token; it starts with sk-ant-oat01-)
+set -u
+export PATH=$PATH:/root/.local/bin
+T="${1:-}"
+[ -z "$T" ] && { echo "usage: worth-authorize <token>"; exit 1; }
+case "$T" in sk-ant-oat01-*) ;; *) echo "That does not look like a setup-token (should start with sk-ant-oat01-). Run: claude setup-token"; exit 1;; esac
+[ ${#T} -lt 60 ] && { echo "Token too short (${#T} chars): probably truncated when pasting. Run: claude setup-token"; exit 1; }
+echo "testing token against the API..."
+R=$(cd /tmp && echo "reply with exactly OK" | CLAUDE_CODE_OAUTH_TOKEN="$T" timeout 90 claude -p --model sonnet --output-format json --max-turns 1 2>/dev/null | python3 -c 'import sys,json;d=json.load(sys.stdin);print("ERR" if d.get("is_error") else "OK", d.get("result","")[:80])')
+case "$R" in OK*) ;; *) echo "token rejected: $R"; exit 1;; esac
+sed -i "/^#\? \?CLAUDE_CODE_OAUTH_TOKEN=/d" /etc/worth-one/env
+echo "CLAUDE_CODE_OAUTH_TOKEN=$T" >> /etc/worth-one/env
+chmod 600 /etc/worth-one/env
+echo "token valid and saved. starting the brain..."
+systemctl start worth-brain.service && sleep 3 && worthctl status | tail -5

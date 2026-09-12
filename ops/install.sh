@@ -29,6 +29,7 @@ install -m 755 "$APP/ops/worthctl" /usr/local/bin/worthctl
 install -m 755 "$APP/ops/tunnel-sync.sh" /usr/local/bin/worth-tunnel-sync
 install -m 755 "$APP/ops/daily.sh" /usr/local/bin/worth-daily
 install -m 755 "$APP/ops/indexnow.sh" /usr/local/bin/worth-indexnow
+install -m 755 "$APP/ops/worth-authorize" /usr/local/bin/worth-authorize
 install -m 755 "$APP/brain/run.sh" /usr/local/bin/worth-brain
 for u in worth-one.service worth-tunnel.service worth-tunnel-sync.service worth-tunnel-sync.timer worth-daily.service worth-daily.timer worth-brain.service worth-brain.timer; do
   install -m 644 "$APP/ops/systemd/$u" /etc/systemd/system/$u

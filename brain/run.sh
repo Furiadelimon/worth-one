@@ -14,8 +14,8 @@ NEXT=$(( $(date +%s) + 6*3600 ))
 if [ "$(worthctl state | python3 -c 'import sys,json;print(json.load(sys.stdin)["settings"]["PROJECT_STATUS"])')" = "PAUSED" ]; then
   worthctl run brain skipped "PROJECT PAUSED by owner" "$NEXT"; exit 0
 fi
-if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] || ! command -v claude >/dev/null 2>&1; then
-  worthctl human "Authorize the autonomous brain" "Run once on the LXC: 'claude setup-token', paste the token as CLAUDE_CODE_OAUTH_TOKEN in /etc/worth-one/env, then 'systemctl start worth-brain'. Until then, only deterministic jobs run (site, analytics, reports, tunnel)."
+if { [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ ! -f /root/.claude/.credentials.json ]; } || ! command -v claude >/dev/null 2>&1; then
+  worthctl human "Authorize the autonomous brain" "On the LXC either run 'claude' and log in (/login), or run 'claude setup-token' and then 'worth-authorize <token>'. Until then, only deterministic jobs run (site, analytics, reports)."
   worthctl run brain skipped "brain not authorized (no CLAUDE_CODE_OAUTH_TOKEN)" "$NEXT"; exit 0
 fi
 
