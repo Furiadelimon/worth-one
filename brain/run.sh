@@ -3,6 +3,7 @@
 # The brain reads the full project state, then returns a JSON plan which this script applies through worthctl.
 # It never touches money, never posts anywhere by itself: it produces content, ideas, decisions and activity records.
 set -uo pipefail
+export PATH=$PATH:/root/.local/bin:/usr/local/bin
 APP=/opt/worth-one
 OUT=/var/lib/worth-one/brain
 mkdir -p "$OUT"

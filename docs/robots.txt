@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://furiadelimon.github.io/worth-one/sitemap.xml
