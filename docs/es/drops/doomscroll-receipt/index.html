@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ticket de Doomscroll · Calculadora de tiempo de pantalla: ¿cuánta vida se te va en el scroll?</title>
+<meta name="description" content="Calculadora gratis de tiempo de pantalla. Di cuánto haces scroll al día y recibe un ticket: al año, por década, días de tu vida y lo que recuperas quitando 30 minutos. Sin registro. Haz captura y compárala.">
+<link rel="canonical" href="https://furiadelimon.github.io/worth-one/es/drops/doomscroll-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/doomscroll-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/doomscroll-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/">
+<meta property="og:title" content="Doomscroll Receipt: your scrolling, itemised"><meta property="og:description" content="2 hours a day is 30 days a year. Get your own receipt in 10 seconds. Free."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/es/drops/doomscroll-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og-doomscroll.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='Arial' font-weight='bold'%3E€1%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="../../../style.css">
+<script src="../../../config.js"></script>
+<script defer src="../../../app.js"></script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebApplication","name":"Doomscroll Receipt","alternateName":"Screen time life calculator","applicationCategory":"UtilityApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"url":"https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/","description":"Turns daily scrolling time into years, days and reclaimable time, printed as a receipt you can share."},
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How is scrolling time per year calculated?","acceptedAnswer":{"@type":"Answer","text":"Daily time multiplied by 365.25, then divided by 24 to express it in full 24-hour days. Two hours a day is 730.5 hours, about 30.4 days a year."}},{"@type":"Question","name":"Where do I find my real screen time?","acceptedAnswer":{"@type":"Answer","text":"iPhone: Settings > Screen Time. Android: Settings > Digital Wellbeing. Use the social/entertainment apps total, not the whole screen time, for a scrolling figure."}},{"@type":"Question","name":"Is this medical or health advice?","acceptedAnswer":{"@type":"Answer","text":"No. It is arithmetic on the number you type. It makes no claims about your health."}},{"@type":"Question","name":"What is the world average?","acceptedAnswer":{"@type":"Answer","text":"Roughly 2 hours 20 minutes per day on social media for internet users aged 16 to 64, according to DataReportal's Digital 2025 report."}}]}]</script>
+</head>
+<body data-lang="es" data-drop="DROP-001">
+<div class="wrap">
+<nav class="nav"><a class="brand" href="../../"><i>€1</i>WORTH ONE?</a><span class="links"><a href="../">Drops</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../../drops/" hreflang="en">English</a></span></nav>
+
+<section class="hero" style="padding-bottom:8px">
+<span class="eyebrow">Drop #001 · calculadora gratis de tiempo de pantalla</span>
+<h1>Ticket de <em>Doomscroll</em></h1>
+<p class="lead">¿Cuánto tiempo haces scroll al día? Sé sincero, nadie mira. Tu móvil lo sabe: Ajustes → Tiempo de uso (iPhone) o Bienestar digital (Android).</p>
+</section>
+
+<section class="card">
+<label for="h"><b>Scroll al día:</b> <span id="hLbl">2h 30m</span></label>
+<input type="range" id="h" min="0.25" max="12" step="0.25" value="2.5" aria-label="hours per day">
+<div class="row small" style="margin-top:8px"><button class="btn sm ghost" data-p="1">1h</button><button class="btn sm ghost" data-p="2">2h</button><button class="btn sm ghost" data-p="3">3h</button><button class="btn sm ghost" data-p="4">4h</button><button class="btn sm ghost" data-p="6">6h</button></div>
+<div id="cmp" class="note" style="margin-top:12px" hidden></div>
+</section>
+
+<div class="receipt" id="rc">
+ <h3>TICKET DE TU VIDA</h3>
+ <div class="c">worth-one · ticket de doomscroll · #<span id="rno">0250</span></div>
+ <hr>
+ <div class="ln"><span>Scroll / día</span><b id="r_day">2h 30m</b></div>
+ <div class="ln"><span>A la semana</span><b id="r_week">17h 30m</b></div>
+ <div class="ln"><span>Al año</span><b id="r_year">38 days</b></div>
+ <hr>
+ <div class="ln"><span>Próximos 5 años</span><b id="r_5">190 days</b></div>
+ <div class="ln"><span>Próximos 10 años</span><b id="r_10">380 days</b></div>
+ <div class="ln"><span>Próximos 20 años</span><b id="r_20">2.1 years</b></div>
+ <hr>
+ <div class="ln"><span>10 años de scroll ≈</span></div>
+ <div id="r_eq" style="font-size:13px;color:#333"></div>
+ <hr>
+ <div class="ln"><span>Tu nivel</span><b id="r_tier">Regular</b></div>
+ <div class="ln"><span>vs media mundial*</span><b id="r_avg">+7%</b></div>
+ <div class="ln" id="r_pct_row" hidden><span>vs otros tickets</span><b id="r_pct"></b></div>
+ <hr>
+ <div class="ln tot"><span>TOTAL, 10 AÑOS</span><b id="r_tot">1.04 years</b></div>
+ <div class="c" style="margin-top:8px">sin devoluciones · pero mira abajo</div>
+ <div class="barcode"></div>
+</div>
+
+<div class="share" id="share"></div>
+<p class="tiny muted center">La imagen se genera en tu móvil. Nada de lo que escribes se envía.</p>
+
+<section class="card">
+<h2>Departamento de devoluciones</h2>
+<p>Recupera <b><span id="mLbl">30</span> min/día</b> y el ticket cambia.</p>
+<input type="range" id="m" min="5" max="180" step="5" value="30" aria-label="minutes recovered per day">
+<div class="fund" style="margin-top:8px">
+<div class="nums" style="grid-template-columns:1fr 1fr"><div><b id="rec_y">7.6 days</b><span>tiempo recuperado / año</span></div><div><b id="rec_10">76 days</b><span>en 10 años</span></div></div>
+</div>
+<p class="small muted" style="margin-top:10px">No es un sermón. Es aritmética. Haz con ella lo que quieras.</p>
+</section>
+
+<section class="card support"></section>
+
+<section class="card">
+<h2>Prueba otro ticket</h2>
+<div class="next">
+ <a class="drop" href="../subscription-receipt/" data-nav="DROP-002"><span class="num">#002</span><b>Ticket de Suscripciones</b><p>Lo que Netflix, Spotify y el gimnasio cuestan en 10 años.</p></a>
+ <a class="drop" href="../../screen-time/" data-nav="screen-time"><span class="num">LEER</span><b>Tiempo de pantalla, hora a hora</b><p>1h, 2h, 3h… lo que suma cada una en una década.</p></a>
+ <a class="drop" href="https://wordsbeforecoffee.com/?src=worthone" data-nav="WBC" rel="noopener"><span class="num">JUGAR</span><b>Words Before Coffee</b><p>Juegos de palabras diarios, sin registro, sin anuncios.</p></a>
+</div>
+</section>
+
+<section class="card prose" id="about-tool">
+<h2>Qué hace realmente esta calculadora de tiempo de pantalla</h2>
+<p>Toma un número, el tiempo que pasas haciendo scroll al día, y lo multiplica: a la semana, al año (en días completos de 24 horas) y en los próximos 5, 10 y 20 años. Luego traduce la cifra de 10 años a cosas reconocibles (libros, idiomas, series), te da un nombre de nivel y muestra a qué distancia estás de la media mundial. El "departamento de devoluciones" hace la misma aritmética con los minutos que decidas recuperar.</p>
+<h3>Cómo conseguir un número real</h3>
+<p>Abre Tiempo de uso (iPhone) o Bienestar digital (Android), mira el total semanal de apps sociales y de entretenimiento y divide entre siete. La mayoría se queda corta entre un 30 y un 50 por ciento, por eso el control empieza en 2h30, cerca de la media mundial.</p>
+<h3>Por qué días y no horas</h3>
+<p>"Dos horas al día" suena a hábito. "Treinta días al año" suena a decisión. Es el mismo número. El ticket existe porque la segunda forma es la que la gente recuerda, y la que envía a un amigo.</p>
+<h3>Lo que no es</h3>
+<p>No es un diagnóstico, ni una afirmación sobre salud, ni un juicio. Parte del scroll es descanso, parte es trabajo, parte es alegría. El ticket solo muestra el total para que, decidas lo que decidas, lo hagas con el número delante.</p>
+</section>
+
+<p class="tiny muted">*La media mundial en redes sociales ronda las 2h20/día (DataReportal, Digital 2025). Todo esto es aritmética sobre el número que escribiste, no consejo sobre tu salud.</p>
+
+<footer><a class="brand" href="../../">WORTH ONE?</a><br><a href="../../">Inicio</a><a href="../">Drops</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../privacy.html">Privacidad</a></footer>
+</div>
+<canvas id="cv" width="1080" height="1350" hidden></canvas>
+<script>
+(function(){
+const $=s=>document.querySelector(s);const h=$('#h'),m=$('#m');
+const fmtH=x=>{const H=Math.floor(x),M=Math.round((x-H)*60);return H?(M?H+'h '+M+'m':H+'h'):M+'m'};
+const fmtD=d=>d<1?Math.round(d*24)+' horas':d<60?(Math.round(d*10)/10).toLocaleString('es')+' días':d<365?Math.round(d)+' días':(Math.round(d/365.25*100)/100).toLocaleString('es')+' años';
+const tiers=[[1,'Pulgar ligero'],[2,'Scroll casual'],[3,'Habitual'],[4,'Comprometido'],[6,'Alta rotación'],[99,'Atleta profesional del pulgar']];
+const AVG=2.33;let started=false,resultTimer=null,cmpTimer=null,state={};
+function eq(h10){const out=[];const books=Math.round(h10/6);const lotr=Math.round(h10/11.4);const lang=h10/500;const friends=h10/87;
+ out.push('• leer '+books.toLocaleString('es')+' libros (6h cada uno)');
+ if(lang>=1)out.push('• aprender '+(Math.floor(lang))+' idioma'+(lang>=2?'s':'')+' a nivel conversacional');
+ out.push('• ver todos los episodios de Friends '+(friends<1?'0.'+Math.round(friends*10):Math.round(friends*10)/10)+' veces');
+ out.push('• la trilogía extendida del Señor de los Anillos, '+lotr.toLocaleString('es')+' veces');return out}
+function render(){const x=+h.value;const week=x*7,yearH=x*365.25,yearD=yearH/24,d5=yearD*5,d10=yearD*10,d20=yearD*20;const tier=tiers.find(t=>x<t[0])[1];const dif=Math.round((x-AVG)/AVG*100);
+ $('#hLbl').textContent=fmtH(x);$('#r_day').textContent=fmtH(x);$('#r_week').textContent=fmtH(week);$('#r_year').textContent=fmtD(yearD);$('#r_5').textContent=fmtD(d5);$('#r_10').textContent=fmtD(d10);$('#r_20').textContent=fmtD(d20);
+ $('#r_eq').innerHTML=eq(yearH*10).join('<br>');$('#r_tier').textContent=tier;$('#r_avg').textContent=(dif>=0?'+':'')+dif+'%';$('#r_tot').textContent=fmtD(d10);
+ const mm=+m.value,recY=mm/60*365.25/24;$('#mLbl').textContent=mm;$('#rec_y').textContent=fmtD(recY);$('#rec_10').textContent=fmtD(recY*10);
+ state={x,tier,yearD,d10,d20,dif,eq:eq(yearH*10),recY,mm};
+ $('#rno').textContent=String(Math.round(x*100)).padStart(4,'0');
+ const rc=$('#rc');rc.classList.remove('flash');void rc.offsetWidth;rc.classList.add('flash');
+ clearTimeout(resultTimer);resultTimer=setTimeout(()=>window.WO&&window.WO.send('drop_result',{h:x,tier}),900);
+ clearTimeout(cmpTimer);cmpTimer=setTimeout(async()=>{if(!window.WO)return;const c=await WO.compare('DROP-001',x);if(c&&c.ready){$('#r_pct_row').hidden=false;$('#r_pct').textContent='más que el '+c.pct_below+'% de '+c.n.toLocaleString('es')}},1200)}
+function start(){if(!started){started=true;window.WO&&window.WO.send('drop_start')}}
+h.addEventListener('input',()=>{start();render()});m.addEventListener('input',render);
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>{h.value=b.dataset.p;start();render()}));
+const v=new URLSearchParams(location.search).get('v');if(v&&!isNaN(+v)){const fv=Math.min(12,Math.max(.25,Math.round(+v*4)/4));h.value=fv;$('#cmp').hidden=false;$('#cmp').innerHTML='<b>Alguien te ha enviado su ticket:</b> hace scroll <b>'+fmtH(fv)+'/día</b> ('+fmtD(fv*365.25/24)+' al año). El control está en su valor. Ponlo en el tuyo y devuélveselo.'}
+function card(){const c=$('#cv'),g=c.getContext('2d');g.fillStyle='#f4f1ea';g.fillRect(0,0,1080,1350);g.fillStyle='#fff';g.fillRect(90,90,900,1170);g.fillStyle='#111';g.textAlign='center';g.font='bold 54px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText('TICKET DE TU VIDA',540,190);g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillStyle='#666';g.fillText('ticket de doomscroll · worth one?',540,240);
+ const line=(y)=>{g.strokeStyle='#999';g.setLineDash([12,10]);g.beginPath();g.moveTo(140,y);g.lineTo(940,y);g.stroke();g.setLineDash([])};
+ const row=(l,r,y,big)=>{g.fillStyle='#111';g.textAlign='left';g.font=(big?'bold 44px':'34px')+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(l,150,y);g.textAlign='right';g.font=(big?'bold 44px':'bold 34px')+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(r,930,y)};
+ line(280);row('Scroll / día',fmtH(state.x),350);row('Al año',fmtD(state.yearD),410);line(450);row('Próximos 10 años',fmtD(state.d10),520);row('Próximos 20 años',fmtD(state.d20),580);line(620);
+ g.fillStyle='#333';g.textAlign='left';g.font='30px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText('10 años de scroll ≈',150,680);state.eq.slice(0,3).forEach((e,i)=>{g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(e.slice(0,48),150,730+i*44)});line(880);
+ row('Tu nivel',state.tier,950);row('vs media mundial',(state.dif>=0?'+':'')+state.dif+'%',1010);line(1050);row('TOTAL, 10 AÑOS',fmtD(state.d10),1130,true);
+ g.fillStyle='#ff4a1c';g.textAlign='center';g.font='bold 30px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText('el tuyo: '+(window.WO_SITE||'').replace('https://','')+'/es/drops/doomscroll-receipt/',540,1220);
+ return new Promise(res=>c.toBlob(res,'image/png'))}
+async function makeFile(){const blob=await card();return new File([blob],'mi-ticket-doomscroll.png',{type:'image/png'})}
+document.addEventListener('DOMContentLoaded',()=>{WO.mountShare($('#share'),()=>({text:'Mi ticket de doomscroll: '+fmtH(state.x)+'/día = '+fmtD(state.d10)+' en 10 años. ¿Cuál es el tuyo? (gratis)',params:{v:state.x},makeFile,meta:{h:state.x}}))});
+render();
+})();
+</script>
+</body>
+</html>

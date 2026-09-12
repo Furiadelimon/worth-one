@@ -14,6 +14,10 @@
   const ref = P.get("r") || store("wo_ref") || ""; if (ref && !store("wo_ref") && ref !== sid) store("wo_ref", ref.slice(0, 64));
   const drop = document.body.dataset.drop || "";
   const inFrame = window.top !== window.self;
+  const LANG = document.body.dataset.lang || document.documentElement.lang || "en";
+  const ES = LANG.startsWith("es");
+  const T = ES ? { share: "Compartir ticket", copy: "Copiar enlace", copied: "Copiado. Pégalo donde quieras.", dl: "Imagen descargada + enlace copiado", q: "¿Te ha valido al menos 1 €?", qsub: "Respuesta sincera. No se cobra nada: los pagos no están abiertos, esto solo mide si el experimento merece existir.", w1: "Vale 1 €", w3: "Vale 3 €", w5: "Vale 5 €", no: "No vale 1 €", thanks: "<b>Gracias.</b> Queda registrado como intención, no como dinero. Los pagos reales siguen cerrados hasta que suficiente gente diga que esto vale la pena.", tell: "¿Quieres que te avisen cuando se pueda apoyar? (Solo para eso, nada más.)", tellbtn: "Avísame", or: "O la forma gratis de ayudar: ", send1: "envíaselo a una persona", noted: "<p><b>Anotado.</b> Te escribirá una persona, una sola vez, si se abren los pagos. Gracias por ser de los primeros.</p>", fair: "Justo. Gracias por la sinceridad. El experimento elimina lo que no vale la pena.", bademail: "Ese email no parece correcto", found: "Herramienta gratis que he encontrado: " }
+    : { share: "Share receipt", copy: "Copy link", copied: "Copied. Paste it anywhere.", dl: "Image downloaded + link copied", q: "Was this worth at least €1 to you?", qsub: "Honest answer. Nothing is charged: payments are not open yet, this only measures whether the experiment deserves to exist.", w1: "Worth €1", w3: "Worth €3", w5: "Worth €5", no: "Not worth €1", thanks: "<b>Thank you.</b> That is recorded as intention, not money. Real payments stay closed until enough people say this is worth it.", tell: "Want to be told when supporting becomes possible? (Only for that, nothing else.)", tellbtn: "Tell me", or: "Or the free way to help: ", send1: "send it to one person", noted: "<p><b>Noted.</b> You will hear from a human, once, if payments open. Thank you for being one of the first.</p>", fair: "Fair. Thanks for the honesty. The experiment kills what is not worth it.", bademail: "That email does not look right", found: "Free little tool I found: " };
 
   function send(t, meta, extra) {
     if (!API) return Promise.resolve();
@@ -37,7 +41,7 @@
     }
     return copy(text + " " + url);
   }
-  async function copy(s) { try { await navigator.clipboard.writeText(s); toast("Copied. Paste it anywhere."); send("share", { how: "copy" }); return true; } catch (e) { prompt("Copy this:", s); send("share", { how: "prompt" }); return true; } }
+  async function copy(s) { try { await navigator.clipboard.writeText(s); toast(T.copied); send("share", { how: "copy" }); return true; } catch (e) { prompt("Copy this:", s); send("share", { how: "prompt" }); return true; } }
   function via(net, opts) {
     const url = shareUrl(opts.params); const text = (opts.text || document.title);
     const enc = encodeURIComponent;
@@ -58,10 +62,10 @@
   };
   function mountShare(el, get) {
     if (!el) return;
-    el.innerHTML = '<button class="primary" data-s="img">' + ICON.img + 'Share receipt</button><button data-s="whatsapp">' + ICON.wa + 'WhatsApp</button><button data-s="telegram">' + ICON.tg + 'Telegram</button><a data-s="email" href="#">' + ICON.mail + 'Email</a><button data-s="link">' + ICON.link + 'Copy link</button>';
+    el.innerHTML = '<button class="primary" data-s="img">' + ICON.img + T.share + '</button><button data-s="whatsapp">' + ICON.wa + 'WhatsApp</button><button data-s="telegram">' + ICON.tg + 'Telegram</button><a data-s="email" href="#">' + ICON.mail + 'Email</a><button data-s="link">' + ICON.link + T.copy + '</button>';
     el.querySelectorAll("[data-s]").forEach(b => b.addEventListener("click", async e => {
       e.preventDefault(); const o = get() || {}; const s = b.dataset.s;
-      if (s === "img") { if (o.makeFile) { const file = await o.makeFile(); send("share_card", o.meta || {}); const ok = await share({ text: o.text, params: o.params, file }); if (!(navigator.canShare && navigator.canShare({ files: [file] }))) { const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); toast("Image downloaded + link copied"); } } else share({ text: o.text, params: o.params }); }
+      if (s === "img") { if (o.makeFile) { const file = await o.makeFile(); send("share_card", o.meta || {}); const ok = await share({ text: o.text, params: o.params, file }); if (!(navigator.canShare && navigator.canShare({ files: [file] }))) { const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = file.name; a.click(); toast(T.dl); } } else share({ text: o.text, params: o.params }); }
       else if (s === "link") copy(shareUrl(o.params));
       else via(s, o);
     }));
@@ -72,20 +76,20 @@
   }
   function mountSupport(el) {
     if (!el) return;
-    el.innerHTML = '<h3>Was this worth at least €1 to you?</h3><p class="small muted">Honest answer. Nothing is charged: payments are not open yet, this only measures whether the experiment deserves to exist.</p>' +
-      '<div class="opts"><button data-a="1">Worth €1</button><button data-a="3">Worth €3</button><button data-a="5">Worth €5</button><button class="no" data-a="0">Not worth €1</button></div><div class="after" hidden></div>';
+    el.innerHTML = '<h3>' + T.q + '</h3><p class="small muted">' + T.qsub + '</p>' +
+      '<div class="opts"><button data-a="1">' + T.w1 + '</button><button data-a="3">' + T.w3 + '</button><button data-a="5">' + T.w5 + '</button><button class="no" data-a="0">' + T.no + '</button></div><div class="after" hidden></div>';
     el.querySelectorAll("button").forEach(b => b.addEventListener("click", async () => {
       const a = +b.dataset.a; el.querySelectorAll("button").forEach(x => x.disabled = true); b.style.background = "var(--ink)"; b.style.color = "var(--bg)";
       support(a);
       const after = el.querySelector(".after"); after.hidden = false;
       if (a > 0) {
-        after.innerHTML = '<p><b>Thank you.</b> That is recorded as intention, not money. Real payments stay closed until enough people say this is worth it.</p>' +
-          '<p class="small">Want to be told when supporting becomes possible? (Only for that, nothing else.)</p><div class="row"><input type="email" placeholder="your@email" style="max-width:260px"><button class="btn sm">Tell me</button></div><p class="small muted">Or the free way to help: <a href="#" class="share-after">send it to one person</a>.</p>';
+        after.innerHTML = '<p>' + T.thanks + '</p>' +
+          '<p class="small">' + T.tell + '</p><div class="row"><input type="email" placeholder="tu@email" style="max-width:260px"><button class="btn sm">' + T.tellbtn + '</button></div><p class="small muted">' + T.or + '<a href="#" class="share-after">' + T.send1 + '</a>.</p>';
         const inp = after.querySelector("input"), btn = after.querySelector(".btn");
-        btn.addEventListener("click", async () => { const v = inp.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast("That email does not look right"); return; } btn.disabled = true; await support(a, v, true); after.innerHTML = "<p><b>Noted.</b> You will hear from a human, once, if payments open. Thank you for being one of the first.</p>"; });
-        after.querySelector(".share-after").addEventListener("click", e => { e.preventDefault(); share({ text: "Free little tool I found: " + document.title }); });
+        btn.addEventListener("click", async () => { const v = inp.value.trim(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast(T.bademail); return; } btn.disabled = true; await support(a, v, true); after.innerHTML = T.noted; });
+        after.querySelector(".share-after").addEventListener("click", e => { e.preventDefault(); share({ text: T.found + document.title }); });
       } else {
-        after.innerHTML = '<p class="small muted">Fair. Thanks for the honesty. The experiment kills what is not worth it.</p>';
+        after.innerHTML = '<p class="small muted">' + T.fair + '</p>';
       }
     }));
   }
@@ -104,8 +108,22 @@
   window.WO = { sid, send, share, shareUrl, support, mountSupport, mountShare, fund, toast, compare, copy, param: k => P.get(k), site: SITE };
   if (inFrame && document.body.dataset.embed) { let host = ""; try { host = new URL(document.referrer).hostname; } catch (e) {} send("embed_view", { host, path: location.pathname }); }
   else send("page_view", { path: location.pathname, ref: ref ? 1 : 0 });
+  function langBanner() {
+    try {
+      if (inFrame || store("wo_lang")) return;
+      const nav = (navigator.language || "").toLowerCase();
+      const path = location.pathname.replace(/^.*\/worth-one/, "");
+      const onEs = /^\/es(\/|$)/.test(path);
+      if (nav.startsWith("es") && !onEs && !ES) {
+        const b = document.createElement("div"); b.className = "note"; b.style.cssText = "margin:8px auto 0;max-width:720px;display:flex;justify-content:space-between;gap:10px;align-items:center";
+        b.innerHTML = '<span>Esta página también está en español.</span><span><a href="' + SITE + "/es" + path + '" style="font-weight:700">Ver en español →</a> <a href="#" style="margin-left:10px;color:inherit" class="x">✕</a></span>';
+        b.querySelector(".x").addEventListener("click", e => { e.preventDefault(); store("wo_lang", "en"); b.remove(); });
+        document.body.prepend(b);
+      } else if (ES) { store("wo_lang", "es"); }
+    } catch (e) {}
+  }
   document.addEventListener("DOMContentLoaded", () => {
-    fund(document.querySelector(".fund")); mountSupport(document.querySelector(".support"));
+    langBanner(); fund(document.querySelector(".fund")); mountSupport(document.querySelector(".support"));
     document.querySelectorAll("[data-share]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); share({ text: b.dataset.share }); }));
     document.querySelectorAll("[data-nav]").forEach(a => a.addEventListener("click", () => send("drop_nav", { to: a.dataset.nav })));
   });
