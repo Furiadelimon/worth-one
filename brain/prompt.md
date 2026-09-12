@@ -23,6 +23,10 @@ contact ever), EARNED MEDIA (milestones, aggregated data stories), INTERNAL CROS
 data justifies it. Prefer compounding assets (a page or widget that keeps working without intervention).
 While TOTAL_USERS < 1000: ~70% of effort on distribution/optimisation, at most 30% on new drops.
 Search impressions/clicks are unavailable until Search Console access exists; use src (referrer) data meanwhile.
+A project mailbox exists: every asset you record with a public editorial email in "contact" and a finished "pitch" is sent
+automatically (max 3 per day, one message per contact, ever). So only record contacts that are clearly relevant and public.
+The site is bilingual (English at /, Spanish at /es/); Words Before Coffee (a friend site, Spanish daily word games) is
+cross-promoted on every page.
 
 ## Your job in this run (daily expansion loop)
 1. Read the state: traffic, sources, referrals, share rate, K, drops, assets (directories/newsletters/publishers/

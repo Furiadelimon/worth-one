@@ -16,6 +16,7 @@
   worthctl asset <file.json>               upsert expansion asset(s): directory/newsletter/publisher/backlink/embed/press
   worthctl assets [type]                   list expansion assets
   worthctl outreach <asset_id> [--dry]     send the recorded pitch by email (needs project mailbox in env)
+  worthctl outreach-batch [n]              send up to n prepared pitches with an email contact (daily job)
 """
 import json
 import os
@@ -139,6 +140,9 @@ def main(argv):
     elif cmd == "outreach":
         import outreach
         print(outreach.send(args[0], dry_run="--dry" in args))
+    elif cmd == "outreach-batch":
+        import outreach
+        print("\n".join(outreach.batch(int(args[0]) if args else 3, dry_run="--dry" in args)))
     elif cmd == "notify":
         print("sent" if commands.notify(args[0]) else "not configured / failed")
     else:

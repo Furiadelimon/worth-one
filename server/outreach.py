@@ -48,3 +48,12 @@ def send(asset_id, dry_run=False):
         c.execute("UPDATE assets SET status='submitted', submitted_ts=?, updated_ts=? WHERE asset_id=?", (time.time(), time.time(), asset_id))
     db.log_activity("outreach", f"Contacted {a['type']} {a['name']} ({a['contact']})", a["drop_id"], actor="agent")
     return "sent"
+
+
+def batch(limit=3, dry_run=False):
+    """Send up to `limit` prepared pitches that have an email contact. Called daily. One message per contact, ever."""
+    rows = db.q("SELECT asset_id, name FROM assets WHERE status='prepared' AND contact LIKE '%@%' AND pitch IS NOT NULL AND pitch!='' AND submitted_ts IS NULL ORDER BY created_ts LIMIT ?", (limit,))
+    out = []
+    for r in rows:
+        out.append(f"{r['asset_id']} {r['name'][:40]}: {send(r['asset_id'], dry_run=dry_run)[:60]}")
+    return out or ["nothing to send"]
