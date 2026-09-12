@@ -12,7 +12,10 @@
   worthctl aicost <run> <model> <in> <out> <usd>
   worthctl run <kind> <status> "<summary>" [next_epoch]
   worthctl state                           JSON dump used by the brain prompt
-  worthctl notify "<text>"                 ntfy push to Pedro (if configured)
+  worthctl notify "<text>"                 ntfy push to the owner (if configured)
+  worthctl asset <file.json>               upsert expansion asset(s): directory/newsletter/publisher/backlink/embed/press
+  worthctl assets [type]                   list expansion assets
+  worthctl outreach <asset_id> [--dry]     send the recorded pitch by email (needs project mailbox in env)
 """
 import json
 import os
@@ -41,6 +44,13 @@ def seed():
     if os.path.exists(p):
         for c in json.load(open(p, encoding="utf-8")):
             db.upsert_campaign(c); n += 1
+    p = os.path.join(ENGINE, "assets.json")
+    if os.path.exists(p):
+        for a in json.load(open(p, encoding="utf-8")):
+            existing = db.q1("SELECT status FROM assets WHERE asset_id=?", (a["asset_id"],))
+            if existing and existing["status"] in ("submitted", "accepted", "published", "rejected", "live"):
+                a["status"] = existing["status"]
+            db.upsert_asset(a); n += 1
     print(f"seeded {n} records")
 
 
@@ -71,6 +81,8 @@ def state():
         "recent_activity": db.q("SELECT ts,channel,drop_id,message FROM activity ORDER BY ts DESC LIMIT 40"),
         "last_runs": db.q("SELECT ts,kind,status,summary FROM runs ORDER BY ts DESC LIMIT 5"),
         "ai_cost_30d": stats.ai_cost(30),
+        "expansion": stats.expansion(),
+        "assets": db.q("SELECT asset_id,type,name,url,drop_id,status,result FROM assets ORDER BY updated_ts DESC LIMIT 80"),
     }
     print(json.dumps(out, indent=1, default=str))
 
@@ -115,6 +127,18 @@ def main(argv):
         if len(args) > 3:
             db.set_setting("NEXT_AUTONOMOUS_RUN", args[3])
         print("ok")
+    elif cmd == "asset":
+        d = json.load(open(args[0], encoding="utf-8"))
+        for a in (d if isinstance(d, list) else [d]):
+            db.upsert_asset(a); db.log_activity(a.get("type", "expansion"), f"{a.get('status', '')}: {a.get('name', '')} ({a.get('url', '')[:60]})", a.get("drop_id"), actor="agent")
+        print("ok")
+    elif cmd == "assets":
+        rows = db.q("SELECT asset_id,type,name,status,url FROM assets" + (" WHERE type=?" if args else "") + " ORDER BY type,status", tuple(args[:1]))
+        for r in rows:
+            print(f"{r['asset_id']:<14} {r['type']:<12} {r['status']:<16} {r['name'][:40]:<40} {r['url']}")
+    elif cmd == "outreach":
+        import outreach
+        print(outreach.send(args[0], dry_run="--dry" in args))
     elif cmd == "notify":
         print("sent" if commands.notify(args[0]) else "not configured / failed")
     else:

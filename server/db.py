@@ -72,12 +72,18 @@ CREATE TABLE IF NOT EXISTS supporters (
 );
 
 CREATE TABLE IF NOT EXISTS runs (id INTEGER PRIMARY KEY, ts REAL, kind TEXT, status TEXT, summary TEXT, next_ts REAL);
+
+CREATE TABLE IF NOT EXISTS assets (
+  asset_id TEXT PRIMARY KEY,
+  type TEXT, name TEXT, url TEXT, drop_id TEXT, status TEXT, why TEXT, pitch TEXT, contact TEXT,
+  submitted_ts REAL, result TEXT, notes TEXT, created_ts REAL, updated_ts REAL
+);
 """
 
 DEFAULT_SETTINGS = {
     "PROJECT_STATUS": "ACTIVE",
     "PAYMENTS_ENABLED": "false",
-    "CAR_TARGET": "15000",
+    "CAR_TARGET": "30000",
     "REAL_CONTRIBUTIONS": "0",
     "PAUSED_CHANNELS": "[]",
     "BLOCKED_CHANNELS": "[]",
@@ -88,9 +94,12 @@ DEFAULT_SETTINGS = {
     "NEXT_AUTONOMOUS_RUN": "",
     "PUBLIC_URL": "",
     "API_URL": "",
+    "NEXT_EXPANSION_ACTION": "",
+    "LOCALIZED_PAGES": "0",
 }
 
-EVENT_COLS = ["page_view", "drop_start", "drop_result", "share", "share_card", "support_intent", "ready_to_support", "click", "referral_visit"]
+EVENT_COLS = ["page_view", "drop_start", "drop_result", "share", "share_card", "support_intent", "ready_to_support", "click", "referral_visit", "embed_view", "drop_nav"]
+ASSET_TYPES = ["directory", "newsletter", "publisher", "backlink", "embed", "press", "resource_page", "localization"]
 
 
 def connect():
@@ -240,3 +249,16 @@ def upsert_campaign(d):
             c.execute("UPDATE campaigns SET " + sets + ", updated_ts=? WHERE campaign_id=?", vals[1:] + [time.time(), d["campaign_id"]])
         else:
             c.execute("INSERT INTO campaigns(" + ",".join(cols) + ",created_ts,updated_ts) VALUES(" + marks + ",?,?)", vals + [time.time(), time.time()])
+
+
+def upsert_asset(d):
+    cols = ["asset_id", "type", "name", "url", "drop_id", "status", "why", "pitch", "contact", "submitted_ts", "result", "notes"]
+    vals = [d.get(k) for k in cols]
+    marks = ",".join(["?"] * len(cols))
+    with tx() as c:
+        r = c.execute("SELECT asset_id FROM assets WHERE asset_id=?", (d["asset_id"],)).fetchone()
+        if r:
+            sets = ",".join(k + "=?" for k in cols[1:])
+            c.execute("UPDATE assets SET " + sets + ", updated_ts=? WHERE asset_id=?", vals[1:] + [time.time(), d["asset_id"]])
+        else:
+            c.execute("INSERT INTO assets(" + ",".join(cols) + ",created_ts,updated_ts) VALUES(" + marks + ",?,?)", vals + [time.time(), time.time()])

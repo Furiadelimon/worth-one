@@ -1,4 +1,4 @@
-"""Human override commands (Pedro keeps absolute control) + notifications.
+"""Human override commands (the owner keeps absolute control) + notifications.
 
 PAUSE ALL / RESUME ALL
 PAUSE DROP <id> / RESUME DROP <id> / KILL DROP <id> / SCALE DROP <id>
@@ -99,7 +99,7 @@ def run(cmd, arg="", actor="system"):
 
 
 def notify(text):
-    """Push a message to Pedro via ntfy.sh if WORTH_NTFY_TOPIC is set. Free, no account, phone app."""
+    """Push a message to the owner via ntfy.sh if WORTH_NTFY_TOPIC is set. Free, no account, phone app."""
     topic = os.environ.get("WORTH_NTFY_TOPIC")
     if not topic:
         return False

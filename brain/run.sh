@@ -12,7 +12,7 @@ MODEL=${WORTH_BRAIN_MODEL:-sonnet}
 NEXT=$(( $(date +%s) + 6*3600 ))
 
 if [ "$(worthctl state | python3 -c 'import sys,json;print(json.load(sys.stdin)["settings"]["PROJECT_STATUS"])')" = "PAUSED" ]; then
-  worthctl run brain skipped "PROJECT PAUSED by Pedro" "$NEXT"; exit 0
+  worthctl run brain skipped "PROJECT PAUSED by owner" "$NEXT"; exit 0
 fi
 if [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] || ! command -v claude >/dev/null 2>&1; then
   worthctl human "Authorize the autonomous brain" "Run once on the LXC: 'claude setup-token', paste the token as CLAUDE_CODE_OAUTH_TOKEN in /etc/worth-one/env, then 'systemctl start worth-brain'. Until then, only deterministic jobs run (site, analytics, reports, tunnel)."
@@ -49,6 +49,11 @@ for a in plan.get("activity", [])[:30]:
     ctl("activity", a.get("channel", "brain"), a.get("message", "")[:300], a.get("drop_id") or "")
 for d in plan.get("new_drops", [])[:5]:
     p = f"{out}/{stamp}-{d['drop_id']}.json"; json.dump(d, open(p, "w")); ctl("drop", p)
+for a in plan.get("assets", [])[:20]:
+    p = f"{out}/{stamp}-{a['asset_id']}.json"; json.dump(a, open(p, "w")); ctl("asset", p)
+for sp in plan.get("seo_pages", [])[:10]:
+    ctl("activity", "seo", f"Proposed page {sp.get('path','')} for query '{sp.get('query','')}': {sp.get('why','')[:120]}", "")
+if plan.get("next_expansion_action"): ctl("cmd", "SET", "NEXT_EXPANSION_ACTION=" + plan["next_expansion_action"][:200])
 for c in plan.get("campaigns", [])[:20]:
     p = f"{out}/{stamp}-{c['campaign_id']}.json"; json.dump(c, open(p, "w")); ctl("campaign", p)
 for h in plan.get("human_actions", [])[:5]:

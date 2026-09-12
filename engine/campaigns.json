@@ -37,7 +37,7 @@
     "campaign_id": "CMP-20260912-03",
     "drop_id": "DROP-001",
     "platform": "hackernews",
-    "account": "ACCESS REQUIRED (Pedro's HN account or a new one; needs human)",
+    "account": "BLOCKED (social channels off by directive)",
     "country": "US",
     "language": "en",
     "audience": "Show HN readers",
@@ -46,15 +46,15 @@
     "cta": "Show HN link",
     "url": "https://furiadelimon.github.io/worth-one/?src=hn&c=CMP-20260912-03",
     "date": "",
-    "status": "access_required",
+    "status": "blocked",
     "community_rules": "Show HN: must be something people can try; no begging; be honest about the car in the text. Post once, answer comments.",
-    "result": ""
+    "result": "Social channels blocked by directive (2026-09-12). Kept for the record only."
   },
   {
     "campaign_id": "CMP-20260912-04",
     "drop_id": "DROP-001",
     "platform": "reddit",
-    "account": "ACCESS REQUIRED (account with karma/age; new accounts get filtered)",
+    "account": "BLOCKED (social channels off by directive)",
     "country": "US",
     "language": "en",
     "audience": "r/InternetIsBeautiful, r/SideProject, r/nosurf, r/digitalminimalism",
@@ -63,15 +63,15 @@
     "cta": "link post / comment link",
     "url": "https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=reddit&c=CMP-20260912-04",
     "date": "",
-    "status": "access_required",
+    "status": "blocked",
     "community_rules": "Re-read each subreddit's rules on the day of posting; r/InternetIsBeautiful: no sign-up walls, one post per site; r/SideProject: allowed self-promo; r/nosurf: no self-promotion, share as text post experience, link only if asked.",
-    "result": ""
+    "result": "Social channels blocked by directive (2026-09-12). Kept for the record only."
   },
   {
     "campaign_id": "CMP-20260912-05",
     "drop_id": "DROP-001",
     "platform": "x",
-    "account": "ACCESS REQUIRED",
+    "account": "BLOCKED (social channels off by directive)",
     "country": "GLOBAL",
     "language": "en",
     "audience": "productivity / indie / build-in-public followers",
@@ -80,15 +80,15 @@
     "cta": "Get yours (free)",
     "url": "https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=x&c=CMP-20260912-05",
     "date": "",
-    "status": "access_required",
+    "status": "blocked",
     "community_rules": "No spam threads, no reply-spam. One post + replies to people who answer.",
-    "result": ""
+    "result": "Social channels blocked by directive (2026-09-12). Kept for the record only."
   },
   {
     "campaign_id": "CMP-20260912-06",
     "drop_id": "DROP-001",
     "platform": "tiktok",
-    "account": "ACCESS REQUIRED (needs a phone + account)",
+    "account": "BLOCKED (social channels off by directive)",
     "country": "GLOBAL",
     "language": "en",
     "audience": "16-30, screen-time guilt humour",
@@ -97,15 +97,15 @@
     "cta": "link in bio",
     "url": "https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=tiktok&c=CMP-20260912-06",
     "date": "",
-    "status": "access_required",
+    "status": "blocked",
     "community_rules": "Community guidelines: fine. No 'health' claims.",
-    "result": ""
+    "result": "Social channels blocked by directive (2026-09-12). Kept for the record only."
   },
   {
     "campaign_id": "CMP-20260912-07",
     "drop_id": "DROP-001",
     "platform": "producthunt",
-    "account": "ACCESS REQUIRED",
+    "account": "BLOCKED (social channels off by directive)",
     "country": "GLOBAL",
     "language": "en",
     "audience": "PH daily browsers",
@@ -114,9 +114,9 @@
     "cta": "",
     "url": "https://furiadelimon.github.io/worth-one/?src=ph&c=CMP-20260912-07",
     "date": "",
-    "status": "prepared",
+    "status": "blocked",
     "community_rules": "Maker must post; no vote-asking outside guidelines.",
-    "result": "hold until 3 drops"
+    "result": "Social channels blocked by directive (2026-09-12). Kept for the record only."
   },
   {
     "campaign_id": "CMP-20260912-08",

@@ -12,6 +12,6 @@ Context, because you'll wonder: it's part of an experiment where I try to buy a 
 
 No affiliate links, no ask beyond "use it if it's useful".
 
-Pedro
+Worth One?
 
 Rules: one message per person, ever. No follow-ups unless they reply. Never mass-send.

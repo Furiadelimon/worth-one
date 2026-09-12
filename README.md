@@ -5,7 +5,7 @@
 One person is trying to buy a car by publishing free, useful, surprising or entertaining web experiences ("drops").
 Everything is free. After using a drop you get one question: *was this worth €1 to you?*
 Payments are closed until enough people say yes; until then the site only measures intention, shown separately
-from real money, which is €0.
+from real money, which is €0. Target: €30,000. The person behind it is not named; the public identity is the project itself.
 
 Site: https://furiadelimon.github.io/worth-one/
 

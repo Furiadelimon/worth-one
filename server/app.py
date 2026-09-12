@@ -28,7 +28,7 @@ import commands
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SITE_DIR = os.environ.get("WORTH_SITE", os.path.join(ROOT, "..", "docs"))
 ADMIN_TOKEN = os.environ.get("WORTH_ADMIN_TOKEN", "")
-ALLOWED_TYPES = {"page_view", "drop_start", "drop_result", "share", "share_card", "click", "referral_visit"}
+ALLOWED_TYPES = {"page_view", "drop_start", "drop_result", "share", "share_card", "click", "referral_visit", "embed_view", "drop_nav"}
 SID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -136,6 +136,15 @@ def public_stats():
     return JSONResponse(stats.public_stats(), headers={"Cache-Control": "public, max-age=60"})
 
 
+@app.get("/v1/compare")
+def compare(d: str, v: float):
+    """Anonymous aggregate: how a value compares with everyone else's results for a drop. Only when n is large enough."""
+    if d not in ("DROP-001", "DROP-002"):
+        raise HTTPException(404)
+    key = {"DROP-001": "$.h", "DROP-002": "$.m"}[d]
+    return JSONResponse(stats.compare(d, key, v), headers={"Cache-Control": "public, max-age=300"})
+
+
 # ---------------- private control center ----------------
 
 def _is_lan(request: Request):
@@ -189,6 +198,9 @@ def admin_state(request: Request):
         "series": stats.daily_series(14),
         "reports": db.q("SELECT day FROM daily_reports ORDER BY day DESC LIMIT 30"),
         "supporters": db.q("SELECT ts, amount, drop_id, country, substr(email,1,3)||'***' email FROM supporters ORDER BY ts DESC LIMIT 50"),
+        "expansion": stats.expansion(),
+        "assets": db.q("SELECT * FROM assets ORDER BY updated_ts DESC LIMIT 300"),
+        "expansion_feed": db.q("SELECT * FROM activity WHERE channel IN ('seo','directory','outreach','referral','embed','backlink','newsletter','press','localization','publisher','site') ORDER BY ts DESC LIMIT 60"),
         "now": time.time(),
     }
 
@@ -209,7 +221,7 @@ async def admin_cmd(request: Request):
     cmd = (body.get("cmd") or "").strip()
     arg = (body.get("arg") or "").strip()
     try:
-        msg = commands.run(cmd, arg, actor="pedro")
+        msg = commands.run(cmd, arg, actor="owner")
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"ok": True, "msg": msg}

@@ -87,7 +87,7 @@ def daily_series(days=14):
 
 def car_fund():
     s = all_settings()
-    target = float(s.get("CAR_TARGET", 15000))
+    target = float(s.get("CAR_TARGET", 30000))
     real = float(s.get("REAL_CONTRIBUTIONS", 0))
     c = counts()
     return {
@@ -113,3 +113,67 @@ def public_stats():
         "drops": [{"drop_id": d["drop_id"], "users": d["users"], "results": d["results"], "shares": d["shares"], "intents": d["intents"]} for d in drops],
         "generated": time.time(),
     }
+
+
+SEARCH_SRC = ("google", "bing", "duckduckgo", "yahoo", "yandex", "ecosia", "baidu", "naver", "search", "brave")
+
+
+def _src_users(where_src, since):
+    return q1("SELECT COUNT(DISTINCT sid) u FROM events WHERE type='page_view' AND ts>=? AND (" + where_src + ")", [since])["u"]
+
+
+def expansion():
+    """NON-SOCIAL GLOBAL EXPANSION metrics: search, referrals, embeds, assets (backlinks/directories/newsletters/publishers/press)."""
+    now = time.time()
+    since7, since14, since30 = now - 7 * 86400, now - 14 * 86400, now - 30 * 86400
+    search_where = " OR ".join("lower(src) LIKE '%" + s + "%'" for s in SEARCH_SRC)
+    seo_users = _src_users(search_where, 0)
+    seo_users_7 = _src_users(search_where, since7)
+    referral_users = q1("SELECT COUNT(*) u FROM sessions WHERE ref IS NOT NULL AND ref!=''")["u"]
+    embed_views = q1("SELECT COUNT(*) n, COUNT(DISTINCT sid) u FROM events WHERE type='embed_view'")
+    embed_hosts = q("SELECT json_extract(meta,'$.host') host, COUNT(*) n FROM events WHERE type='embed_view' GROUP BY 1 ORDER BY n DESC LIMIT 20")
+    nav = q1("SELECT COUNT(*) n FROM events WHERE type='drop_nav'")["n"]
+    assets = q("SELECT type, status, COUNT(*) n FROM assets GROUP BY type, status")
+    by_type = {}
+    for a in assets:
+        by_type.setdefault(a["type"], {})[a["status"]] = a["n"]
+
+    def cnt(t, *statuses):
+        d = by_type.get(t, {})
+        return sum(v for k, v in d.items() if not statuses or k in statuses)
+
+    cur = {r["channel"]: r["users"] for r in q("SELECT COALESCE(NULLIF(src,''),'direct') channel, COUNT(DISTINCT sid) users FROM events WHERE type='page_view' AND ts>=? GROUP BY 1", [since7])}
+    prev = {r["channel"]: r["users"] for r in q("SELECT COALESCE(NULLIF(src,''),'direct') channel, COUNT(DISTINCT sid) users FROM events WHERE type='page_view' AND ts>=? AND ts<? GROUP BY 1", [since14, since7])}
+    top_source = max(cur.items(), key=lambda x: x[1])[0] if cur else "-"
+    growth = sorted(((c, cur[c] - prev.get(c, 0)) for c in cur), key=lambda x: -x[1])
+    fastest = growth[0][0] if growth and growth[0][1] > 0 else "-"
+    pages = q("SELECT json_extract(meta,'$.path') path, COUNT(DISTINCT sid) users, COUNT(DISTINCT day) active_days FROM events WHERE type='page_view' AND ts>=? GROUP BY 1 ORDER BY users DESC LIMIT 15", [since30])
+    best = next((p for p in pages if p["path"]), None)
+    s = all_settings()
+    c = counts()
+    return {
+        "search_impressions": None, "organic_clicks": None,
+        "seo_users": seo_users, "seo_users_7d": seo_users_7,
+        "referral_users": referral_users, "shares": c["share_events"], "k": c["k"],
+        "backlinks": cnt("backlink", "live", "published", "accepted"), "backlinks_pending": cnt("backlink", "prepared", "submitted"),
+        "directories_submitted": cnt("directory", "submitted", "accepted", "live"), "directories_listed": cnt("directory", "accepted", "live"), "directories_prepared": cnt("directory", "prepared", "access_required"),
+        "embeds_views": embed_views["n"], "embeds_users": embed_views["u"], "embed_hosts": embed_hosts,
+        "publishers_contacted": cnt("publisher", "submitted", "replied", "published"), "publishers_prepared": cnt("publisher", "prepared", "access_required"),
+        "newsletters_contacted": cnt("newsletter", "submitted", "replied", "published"), "newsletters_prepared": cnt("newsletter", "prepared", "access_required"),
+        "press_mentions": cnt("press", "published"),
+        "countries": len(by_country()), "localized_pages": int(s.get("LOCALIZED_PAGES", "0") or 0),
+        "drop_to_drop_clicks": nav,
+        "top_source": top_source, "fastest_growing_source": fastest, "sources_7d": cur, "sources_prev7d": prev,
+        "best_compounding_asset": best, "top_pages_30d": pages,
+        "next_expansion_action": s.get("NEXT_EXPANSION_ACTION", ""),
+    }
+
+
+def compare(drop_id, json_key, value, min_n=50):
+    rows = q("SELECT CAST(json_extract(meta,?) AS REAL) v FROM events WHERE type='drop_result' AND drop_id=? AND json_extract(meta,?) IS NOT NULL", [json_key, drop_id, json_key])
+    vals = sorted(r["v"] for r in rows if r["v"] is not None)
+    n = len(vals)
+    if n < min_n:
+        return {"n": n, "ready": False}
+    below = sum(1 for v in vals if v < value)
+    return {"n": n, "ready": True, "avg": round(sum(vals) / n, 2), "median": vals[n // 2], "pct_below": round(100 * below / n)}
