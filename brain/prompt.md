@@ -36,6 +36,7 @@ Search impressions/clicks are unavailable until Search Console access exists; us
 5. Record decisions (scale / iterate / pause / kill) only when data justifies them.
 
 ## Output
+You have no tools in this run: do not try to browse, read files or run commands; reason from the state below.
 Return ONE JSON object and nothing else:
 {
  "summary": "one paragraph of what you decided and why",

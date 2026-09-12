@@ -23,7 +23,7 @@ STATE=$(worthctl state)
 PROMPT=$(cat "$APP/brain/prompt.md"; echo; echo '## CURRENT STATE (JSON)'; echo "$STATE"; echo; echo '## EXISTING CONTENT FILES'; ls -1 "$APP/engine/content" 2>/dev/null)
 cd "$APP"
 worthctl cmd "SET CURRENT ACTION" "Brain run $STAMP in progress" >/dev/null
-RAW=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 1 2>"$OUT/$STAMP.err") || true
+RAW=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 3 --tools "" 2>"$OUT/$STAMP.err") || true
 echo "$RAW" > "$OUT/$STAMP.raw.json"
 python3 - "$RAW" "$STAMP" <<'PY'
 import json, sys, subprocess, re, os
