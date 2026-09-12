@@ -9,6 +9,7 @@ import os
 import smtplib
 import time
 from email.message import EmailMessage
+from email.utils import formatdate, make_msgid
 
 import db
 
@@ -37,6 +38,9 @@ def send(asset_id, dry_run=False):
     msg["From"] = os.environ["WORTH_FROM"]
     msg["To"] = a["contact"]
     msg["Subject"] = subject.replace("Subject:", "").strip()[:120]
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(domain="wordsbeforecoffee.com")
+    msg["Reply-To"] = os.environ["WORTH_FROM"]
     msg.set_content(body.strip() + "\n\n-- \nWORTH ONE?  https://furiadelimon.github.io/worth-one/\nAn independent internet experiment run by one person with autonomous software.\n")
     if dry_run:
         return msg.as_string()
