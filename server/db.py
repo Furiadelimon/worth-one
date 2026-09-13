@@ -322,7 +322,7 @@ def upsert_asset(d):
 
 ACTION_COLS = ["action_id", "asset_id", "type", "target", "url", "drop_id", "campaign_id",
                "expected_users", "confidence", "strategic_value", "effort", "priority",
-               "status", "attempts", "result", "human_required_reason", "human_action_text",
+               "status", "attempts", "last_attempt", "result", "human_required_reason", "human_action_text",
                "estimated_human_time", "payload", "next_verify_at", "telegram_notified_ts"]
 
 

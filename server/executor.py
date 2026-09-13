@@ -437,7 +437,7 @@ def run_cycle():
     auto.sort(key=lambda a: -(a.get("priority") or 0))
     executed, capped = {}, 0
     emails_left = outreach.daily_cap() - outreach.sent_today("wbc")
-    db.set_setting("CURRENT_ACTION", f"Executor cycle: {len(auto)} queued, {emails_left} email slots left today")
+    db.set_setting("CURRENT_ACTION", f"Executor cycle: {len(auto)} queued, {max(0, emails_left)} email slots left today")
     for a in auto:
         if a["type"] == "email_outreach":
             if emails_left <= 0:
