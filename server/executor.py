@@ -251,6 +251,15 @@ def sync_from_assets():
     # autonomous route (a public email with an authored pitch, a tested form recipe), the rest become MANUAL_ONLY.
     with db.tx() as c:
         c.execute("UPDATE actions SET status='PREPARED', updated_ts=? WHERE drop_id='WBC' AND status='HUMAN_REQUIRED'", (time.time(),))
+        # keep actions aligned with what already happened to their asset (e.g. a directory submitted by hand):
+        # never re-submit something that is already submitted or live, never re-queue a do-not-contact target.
+        c.execute("""UPDATE actions SET status='SUBMITTED', next_verify_at=COALESCE(next_verify_at, ?), updated_ts=?
+                     WHERE drop_id='WBC' AND status IN ('PREPARED','QUEUED','FAILED','STALE')
+                       AND asset_id IN (SELECT asset_id FROM assets WHERE status='submitted')""", (time.time() + VERIFY_SCHEDULE[0], time.time()))
+        c.execute("""UPDATE actions SET status='LIVE', next_verify_at=NULL, updated_ts=? WHERE drop_id='WBC' AND status!='LIVE'
+                       AND asset_id IN (SELECT asset_id FROM assets WHERE status='live')""", (time.time(),))
+        c.execute("""UPDATE actions SET status='DO_NOT_CONTACT', updated_ts=? WHERE drop_id='WBC' AND status IN ('PREPARED','QUEUED')
+                       AND asset_id IN (SELECT asset_id FROM assets WHERE status IN ('do_not_contact','pitch_rejected','archived'))""", (time.time(),))
     for a in db.q("SELECT * FROM assets WHERE drop_id='WBC' AND status='prepared'"):
         eu, conf, sv, eff = DEFAULTS_BY_TYPE.get(a["type"], (8, 0.4, 0.5, 0.3))
         if db.add_action("ACT-" + a["asset_id"], "pending_classification", asset_id=a["asset_id"], target=a["name"], url=a["url"],
