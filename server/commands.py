@@ -92,6 +92,12 @@ def run(cmd, arg="", actor="system"):
     elif cmd == "SET":
         k, _, v = arg.partition("=")
         db.set_setting(k.strip().upper(), v.strip()); msg = f"{k.strip().upper()}={v.strip()}"
+    elif cmd == "COMPLAINT":
+        # a recipient complained: mark the sent email, and never contact that address or domain again
+        with db.tx() as c:
+            n = c.execute("UPDATE email_log SET complaint=1, note='complaint recorded by owner' WHERE asset_id=? AND status='sent'", (arg,)).rowcount
+            c.execute("UPDATE assets SET status='do_not_contact', result='COMPLAINT received; never contact again' WHERE asset_id=?", (arg,))
+        msg = f"complaint recorded on {n} email(s) for {arg}; asset marked do_not_contact"
     else:
         raise ValueError(f"unknown command: {cmd}")
     db.log_activity("control", f"{cmd} {arg}".strip() + (f" -> {msg}" if msg else ""), actor=actor)

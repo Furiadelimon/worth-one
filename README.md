@@ -1,5 +1,10 @@
 # Worth One?
 
+> **STATUS (2026-09-13): ARCHIVED / PAUSED.** Worth One is frozen: no new drops, no outreach, no SEO work, no
+> directories, no campaigns. The site and its analytics stay online untouched. This repository now also hosts the
+> **Words Before Coffee Growth Control Center** and its autonomous growth engine (`server/`, `brain/`, `ops/`), which is
+> the only active project. See [STATUS.md](STATUS.md).
+
 **Free little things for strangers. Goal: one car.**
 
 One person is trying to buy a car by publishing free, useful, surprising or entertaining web experiences ("drops").

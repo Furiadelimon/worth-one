@@ -96,10 +96,42 @@ CREATE INDEX IF NOT EXISTS ix_actions_asset ON actions(asset_id);
 CREATE TABLE IF NOT EXISTS telegram_log (
   id INTEGER PRIMARY KEY, ts REAL, human_actions_count INTEGER, estimated_minutes REAL, actions TEXT, resolved_at REAL
 );
+
+-- Words Before Coffee growth engine (pivot 2026-09-13) ------------------------------------------
+CREATE TABLE IF NOT EXISTS wbc_snapshots (id INTEGER PRIMARY KEY, ts REAL, day TEXT, data TEXT);
+CREATE INDEX IF NOT EXISTS ix_wbc_snap_ts ON wbc_snapshots(ts);
+
+-- one row per domain/url investigated: never re-research the same thing (cost control)
+CREATE TABLE IF NOT EXISTS research_cache (
+  key TEXT PRIMARY KEY, ts REAL, status TEXT, data TEXT
+);
+
+-- every outbound email, rendered exactly as sent, with the checks that let it through
+CREATE TABLE IF NOT EXISTS email_log (
+  id INTEGER PRIMARY KEY, ts REAL, asset_id TEXT, to_addr TEXT, subject TEXT, body TEXT,
+  checks TEXT, status TEXT, complaint INTEGER DEFAULT 0, note TEXT
+);
 """
+
+# columns added after the first release; applied idempotently in conn()
+MIGRATIONS = [
+    "ALTER TABLE assets ADD COLUMN policy TEXT",
+    "ALTER TABLE assets ADD COLUMN pitch_lang TEXT",
+    "ALTER TABLE assets ADD COLUMN src_tag TEXT",
+    "ALTER TABLE assets ADD COLUMN pitch_source TEXT",
+    "ALTER TABLE assets ADD COLUMN contact_source TEXT",
+]
 
 DEFAULT_SETTINGS = {
     "PROJECT_STATUS": "ACTIVE",
+    # pivot 2026-09-13: Words Before Coffee is the only active growth project; Worth One is archived
+    "ACTIVE_PROJECT": "WBC",
+    "WORTH_ONE_STATUS": "ARCHIVED",
+    "AI_DAILY_BUDGET_USD": "1.00",
+    "WBC_EMAIL_CAP": "2",
+    "CLEAN_SENDS_TARGET": "20",
+    "WINNING_PATTERN": "",
+    "LAST_GROWTH_ACTION": "",
     "PAYMENTS_ENABLED": "false",
     "CAR_TARGET": "30000",
     "REAL_CONTRIBUTIONS": "0",
@@ -137,6 +169,11 @@ def conn():
     if _conn is None:
         _conn = connect()
         _conn.executescript(SCHEMA)
+        for m in MIGRATIONS:
+            try:
+                _conn.execute(m)
+            except sqlite3.OperationalError:
+                pass  # already applied
         for k, v in DEFAULT_SETTINGS.items():
             _conn.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (k, v))
         _conn.commit()
@@ -270,7 +307,8 @@ def upsert_campaign(d):
 
 
 def upsert_asset(d):
-    cols = ["asset_id", "type", "name", "url", "drop_id", "status", "why", "pitch", "contact", "submitted_ts", "result", "notes"]
+    cols = ["asset_id", "type", "name", "url", "drop_id", "status", "why", "pitch", "contact", "submitted_ts", "result", "notes",
+            "policy", "pitch_lang", "src_tag", "pitch_source", "contact_source"]
     vals = [d.get(k) for k in cols]
     marks = ",".join(["?"] * len(cols))
     with tx() as c:
@@ -315,3 +353,38 @@ def log_telegram_batch(human_actions_count, estimated_minutes, action_ids):
     with tx() as c:
         c.execute("INSERT INTO telegram_log(ts,human_actions_count,estimated_minutes,actions) VALUES(?,?,?,?)",
                   (time.time(), human_actions_count, estimated_minutes, json.dumps(action_ids)))
+
+
+# ---------------- WBC growth engine helpers ----------------
+
+def cache_get(key, max_age=None):
+    r = q1("SELECT ts, status, data FROM research_cache WHERE key=?", (key,))
+    if not r:
+        return None
+    if max_age and time.time() - r["ts"] > max_age:
+        return None
+    try:
+        return {"ts": r["ts"], "status": r["status"], "data": json.loads(r["data"] or "null")}
+    except Exception:
+        return {"ts": r["ts"], "status": r["status"], "data": None}
+
+
+def cache_set(key, status, data=None):
+    with tx() as c:
+        c.execute("INSERT INTO research_cache(key,ts,status,data) VALUES(?,?,?,?) ON CONFLICT(key) DO UPDATE SET ts=excluded.ts, status=excluded.status, data=excluded.data",
+                  (key, time.time(), status, json.dumps(data) if data is not None else None))
+
+
+def log_email(asset_id, to_addr, subject, body, checks, status, note=""):
+    with tx() as c:
+        c.execute("INSERT INTO email_log(ts,asset_id,to_addr,subject,body,checks,status,note) VALUES(?,?,?,?,?,?,?,?)",
+                  (time.time(), asset_id, to_addr, subject, body, json.dumps(checks), status, note))
+
+
+def clean_sends():
+    """Emails that went out through the full check pipeline, with no complaint recorded."""
+    return q1("SELECT COUNT(*) n FROM email_log WHERE status='sent' AND complaint=0")["n"]
+
+
+def complaints():
+    return q1("SELECT COUNT(*) n FROM email_log WHERE complaint=1")["n"]

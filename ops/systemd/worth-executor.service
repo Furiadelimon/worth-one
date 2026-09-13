@@ -1,5 +1,5 @@
 [Unit]
-Description=Worth One Action Executor (discover -> auto-execute -> verify -> batch Telegram)
+Description=Words Before Coffee Action Executor (verify leads -> execute -> verify results -> learn)
 
 [Service]
 Type=oneshot

@@ -1,4 +1,8 @@
-"""PROJECT WORTH ONE - API + public site + private control center.
+"""API + archived Worth One public site + WORDS BEFORE COFFEE growth control center.
+
+Worth One (2026-09-13): ARCHIVED / PAUSED. Its site and event ingest stay online so historical analytics keep
+working, but no growth work runs for it. /admin is the Words Before Coffee Growth Control Center;
+/admin/worth-one is the frozen read-only dashboard.
 
 Endpoints
   POST /v1/e            event ingest (page_view, drop_start, drop_result, share, share_card, click)
@@ -189,6 +193,7 @@ def _auth(request: Request):
 
 @app.get("/admin")
 def admin(request: Request):
+    """WORDS BEFORE COFFEE - GROWTH CONTROL CENTER (the only active project)."""
     tok = _auth(request)
     with open(os.path.join(ROOT, "admin.html"), encoding="utf-8") as f:
         html = f.read()
@@ -199,6 +204,23 @@ def admin(request: Request):
 
 @app.get("/admin/api/state")
 def admin_state(request: Request):
+    _auth(request)
+    return stats.wbc_control()
+
+
+@app.get("/admin/worth-one")
+def admin_worth_one(request: Request):
+    """Archived Worth One dashboard: read-only view of the frozen project's data."""
+    tok = _auth(request)
+    with open(os.path.join(ROOT, "admin_worth_one.html"), encoding="utf-8") as f:
+        html = f.read().replace("fetch('/admin/api/state')", "fetch('/admin/api/worth-one')")
+    resp = HTMLResponse(html)
+    resp.set_cookie("wo_admin", tok, httponly=True, samesite="strict", max_age=90 * 86400)
+    return resp
+
+
+@app.get("/admin/api/worth-one")
+def admin_state_worth_one(request: Request):
     _auth(request)
     s = db.all_settings()
     open_actions = db.q("SELECT * FROM human_actions WHERE status='open' ORDER BY ts DESC")

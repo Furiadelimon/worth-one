@@ -18,6 +18,8 @@ WORTH_SITE=$APP/docs
 # WORTH_NTFY_TOPIC=worthone-xxxx        # optional: ntfy.sh topic for phone pushes
 # CLAUDE_CODE_OAUTH_TOKEN=               # from: claude setup-token   (enables the autonomous brain)
 # WORTH_BRAIN_MODEL=sonnet
+# WBC_GROWTH_URL=http://192.168.1.117/api/growth   # Words Before Coffee growth metrics (LAN)
+# WBC_GROWTH_TOKEN=                                # value of WBC_GROWTH_TOKEN in the WBC LXC env
 EOF
   chmod 600 "$ENVF"
 fi
@@ -36,6 +38,7 @@ install -m 755 "$APP/ops/worthctl" /usr/local/bin/worthctl
 install -m 755 "$APP/ops/tunnel-sync.sh" /usr/local/bin/worth-tunnel-sync
 install -m 755 "$APP/ops/daily.sh" /usr/local/bin/worth-daily
 install -m 755 "$APP/ops/indexnow.sh" /usr/local/bin/worth-indexnow
+install -m 755 "$APP/ops/indexnow-wbc.sh" /usr/local/bin/worth-indexnow-wbc
 install -m 755 "$APP/ops/worth-authorize" /usr/local/bin/worth-authorize
 install -m 755 "$APP/brain/run.sh" /usr/local/bin/worth-brain
 for u in worth-one.service worth-tunnel.service worth-tunnel-sync.service worth-tunnel-sync.timer worth-daily.service worth-daily.timer worth-brain.service worth-brain.timer worth-executor.service worth-executor.timer; do

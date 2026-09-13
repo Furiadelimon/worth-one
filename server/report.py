@@ -1,87 +1,56 @@
-"""Daily report generator. Deterministic numbers; the WHAT WORKED / LEARNED sections are filled by the brain run
-when available, otherwise by simple rules."""
+"""Daily report for Words Before Coffee. Deterministic numbers; WHAT WORKED / LEARNED come from the last brain run
+when available. Sent to the owner once a day (Telegram) by ops/daily.sh."""
 import json
 import time
 
 import db
 import stats
-
-
-def _best_worst(rows, key, label):
-    rows = [r for r in rows if r.get(key) is not None]
-    if not rows:
-        return "n/a", "n/a"
-    best = max(rows, key=lambda r: r[key])
-    worst = min(rows, key=lambda r: r[key])
-    return best[label], worst[label]
+import wbc
 
 
 def build(day=None, insights=None):
     day = day or db.day_of(time.time() - 86400)
-    d1 = stats.counts(days=1)
-    total = stats.counts()
-    drops = stats.by_drop(days=1)
-    channels = stats.by_channel(days=1)
-    countries = stats.by_country(days=1)
-    top_drop, worst_drop = _best_worst(drops, "users", "drop_id")
-    top_ch, worst_ch = _best_worst(channels, "users", "channel")
-    since = time.time() - 86400
-    created = db.q1("SELECT COUNT(*) n FROM activity WHERE ts>=? AND message LIKE 'Created%'", (since,))["n"]
-    published = db.q1("SELECT COUNT(*) n FROM activity WHERE ts>=? AND message LIKE 'Published%'", (since,))["n"]
-    started = db.q1("SELECT COUNT(*) n FROM drops WHERE created_ts>=?", (since,))["n"]
-    killed = db.q1("SELECT COUNT(*) n FROM activity WHERE ts>=? AND message LIKE '%KILLED%'", (since,))["n"]
+    m = wbc.latest()
+    w = m.get("windows") or {}
+    d1, d7, d30 = w.get("24h") or {}, w.get("7d") or {}, w.get("30d") or {}
+    acq = (m.get("acquisition") or {})
+    top = (acq.get("7d") or [])[:5]
+    games = (m.get("games") or {}).get("7d") or []
+    verdicts = wbc.game_verdicts(m) if games else {}
+    ret = m.get("retention") or {}
+    countries = (m.get("countries") or {}).get("7d") or []
     cost = stats.ai_cost(1)
+    ok24, bad24 = stats._agent_perf(1)
     ins = insights or {}
-    worked = ins.get("worked") or ("No qualified traffic yet. Nothing has proven itself." if d1["users"] < 20 else "See metrics: " + json.dumps({"share_rate": d1["share_rate"], "k": d1["k"]}))
-    failed = ins.get("failed") or ("Distribution is the bottleneck." if d1["users"] < 20 else "-")
-    learned = ins.get("learned") or "More traffic needed before any statistical conclusion."
-    plan = ins.get("plan") or "Keep DROP-001 live, publish prepared content on authorized channels, add DROP-002 if the pipeline allows."
-    fund = stats.car_fund()
-    sc = stats.scorecard(1)
-    w = stats.winners(14)
-    tops = [x for x in w["experiments"] if x["qualified"]][:5]
+    s = db.all_settings()
     lines = [
-        f"DAILY REPORT  {day}  (PROJECT WORTH ONE)",
+        f"WORDS BEFORE COFFEE  daily growth report  {day}",
         "=" * 48,
-        "GROWTH SCORECARD",
-        f"  REAL USERS (total) {sc['real_users_total']}   new {sc['new_users']}   views {sc['views']}   results {sc['results']}",
-        f"  SHARES {sc['shares']}  rate {sc['share_rate']:.1%}   REFERRAL USERS {sc['referral_users']}   K {sc['k']}   mode {sc['viral']['mode']}",
-        f"  WORTH 1EUR INTENTS {sc['worth1_intents']}   COUNTRIES {sc['countries']}",
-        f"  SEO impressions {sc['seo_impressions'] if sc['seo_impressions'] is not None else 'n/a'}  clicks {sc['seo_clicks'] if sc['seo_clicks'] is not None else 'n/a'}  seo users 7d {sc['seo_users']}",
-        f"  OUTREACH SENT {sc['outreach_sent']}   DIRECTORY LISTINGS {sc['directory_listings']}   BACKLINKS {sc['backlinks']}   EMBED VIEWS {sc['embed_views']}",
-        f"  TIKTOK views {sc['tiktok_views']} -> site users {sc['tiktok_users']}",
-        f"  AI COST USD {sc['ai_cost_usd']:.4f}   USERS / EUR AI {sc['users_per_eur_ai'] if sc['users_per_eur_ai'] is not None else 'n/a'}",
-        "  TOP EXPERIMENTS (drop x channel x country x hook, 14d, qualified):",
-    ] + ([f"    {x['drop_id']} {x['channel']}/{x['country']}/{x['hook']}: {x['users']}u share {x['share_rate']:.0%} intent {x['intent_rate']:.0%} -> {x['verdict']}" for x in tops] or ["    none qualified yet (needs >=5 users per cell)"]) + [
-        "",
-        f"TRAFFIC (views)      {d1['page_views']}",
-        f"USERS                {d1['users']}",
-        f"NEW USERS            {d1['new_users']}",
-        f"SHARES               {d1['share_events']}  (share rate {d1['share_rate']:.1%}, K={d1['k']})",
-        f"COUNTRIES            {len(countries)}  " + ", ".join(c['country'] for c in countries[:8]),
-        "",
-        f"TOP DROP             {top_drop}",
-        f"WORST DROP           {worst_drop}",
-        f"TOP CHANNEL          {top_ch}",
-        f"WORST CHANNEL        {worst_ch}",
-        "",
-        f"CONTENT CREATED      {created}",
-        f"CONTENT PUBLISHED    {published}",
-        f"EXPERIMENTS STARTED  {started}",
-        f"EXPERIMENTS KILLED   {killed}",
-        "",
-        f"SUPPORT INTENT (24h) worth1={d1['support_intent']['1']} worth3={d1['support_intent']['3']} worth5={d1['support_intent']['5']} other={d1['support_intent']['other']} no={d1['support_intent']['no']}",
-        f"INTENDED VALUE (24h) EUR {d1['intended_value']:.2f}   READY TO SUPPORT (emails, total) {total['ready_to_support']}",
-        f"CAR FUND             REAL EUR {fund['real']:.2f} / {fund['car_target']:.0f}   INTENDED EUR {fund['intended_value']:.2f}   PAYMENTS {'ON' if fund['payments_enabled'] else 'OFF'}",
-        f"AI COST (24h)        USD {cost['usd']:.4f}  ({cost['runs']} runs)",
-        "",
-        "WHAT WORKED", "  " + worked, "",
-        "WHAT FAILED", "  " + failed, "",
-        "WHAT WAS LEARNED", "  " + learned, "",
-        "NEXT 24H PLAN", "  " + plan,
+        "REAL PLAYERS",
+        f"  users 24h {d1.get('users', '?')}  (new {d1.get('new_users', '?')}, returning {d1.get('returning_users', '?')})",
+        f"  users 7d {d7.get('users', '?')}   users 30d {d30.get('users', '?')}   all time {(w.get('all') or {}).get('users', '?')}",
+        f"  games played 24h {d1.get('games_played', '?')}   7d {d7.get('games_played', '?')}",
+        f"  retention D1 {ret.get('d1', {}).get('rate', 0):.0%}  D7 {ret.get('d7', {}).get('rate', 0):.0%}   shares 7d {(m.get('shares') or {}).get('7d', 0)}   referral users 30d {(m.get('referral_users') or {}).get('30d', 0)}",
+        "GAMES (7d)",
+    ] + [f"  {g['game']:<7} users {g['users']:<4} played {g['games_played']:<4} completion {g['completion']:.0%}  repeat {g['repeat_rate']:.0%}  share {g['share_rate']:.0%}" for g in games] + [
+        f"  best {verdicts.get('best_game', '-')} | fastest {verdicts.get('fastest_growing_game', '-')} | retention {verdicts.get('best_retention_game', '-')} | share {verdicts.get('best_share_rate_game', '-')}",
+        "SOURCES (7d, first touch)",
+    ] + ([f"  {r['source'][:28]:<28} users {r['users']:<4} new {r['new_users']:<4} games {r['games_played']:<4} conv {r['conversion']:.0%} ({'+' if r.get('growth', 0) >= 0 else ''}{r.get('growth', 0)})" for r in top] or ["  no visits recorded yet"]) + [
+        f"  top {acq.get('top_source') or '-'} | fastest {acq.get('fastest_growing_source') or '-'} | best converting {acq.get('best_converting_source') or '-'}",
+        "COUNTRIES (7d) " + ", ".join(f"{c['country']} {c['users']}" for c in countries[:8]),
+        "AGENT",
+        f"  successful actions 24h {ok24}   failed {bad24}   emails today {db.q1('SELECT COUNT(*) n FROM email_log WHERE status=? AND ts>=?', ('sent', time.time() - (time.time() % 86400)))['n']} / cap {s.get('WBC_EMAIL_CAP', '2')}",
+        f"  clean sends {db.clean_sends()} / {s.get('CLEAN_SENDS_TARGET', '20')}   complaints {db.complaints()}",
+        f"  AI cost 24h ${cost['usd'] or 0:.3f} (budget ${s.get('AI_DAILY_BUDGET_USD', '1')}/day)",
+        f"  winning pattern: {s.get('WINNING_PATTERN') or 'none yet (no source has produced 5+ players)'}",
+        "WHAT WORKED   " + (ins.get("worked") or "-"),
+        "WHAT FAILED   " + (ins.get("failed") or "-"),
+        "LEARNED       " + (ins.get("learned") or "-"),
+        "NEXT          " + (s.get("NEXT_ACTION") or ins.get("plan") or "-"),
     ]
+    if m.get("stale"):
+        lines.insert(2, f"  (metrics stale: {m.get('error', '')[:80]})")
     text = "\n".join(lines)
     with db.tx() as c:
-        c.execute("INSERT INTO daily_reports(day,ts,report) VALUES(?,?,?) ON CONFLICT(day) DO UPDATE SET report=excluded.report, ts=excluded.ts", (day, time.time(), text))
-    db.log_activity("report", f"Daily report generated for {day}")
+        c.execute("INSERT INTO daily_reports(day,ts,report) VALUES(?,?,?) ON CONFLICT(day) DO UPDATE SET ts=excluded.ts, report=excluded.report", (day, time.time(), text))
     return text

@@ -1,15 +1,24 @@
-"""ACTION EXECUTOR — turns PREPARED assets into a worked queue instead of a PREPARED graveyard.
+"""ACTION EXECUTOR for Words Before Coffee (pivot 2026-09-13).
 
-DISCOVER -> QUALIFY -> PREPARE -> QUEUE -> AUTO EXECUTE -> VERIFY -> SUBMITTED/LIVE/FAILED.
-Only HUMAN_REQUIRED when no legitimate automatic path exists (login, CAPTCHA, 2FA, payment,
-a public GitHub identity, manual publish on TikTok). Everything here is deterministic code —
-no model calls. The Brain decides what deserves doing; this module does the doing.
+MEASURE -> ANALYSE -> FIND OPPORTUNITY -> EXECUTE -> MEASURE RESULT -> LEARN -> REPEAT.
 
-Run one cycle: `worthctl executor` (also wired to worth-executor.timer).
+Deterministic code, no model calls. The Brain (brain/run.sh) proposes leads and writes pitches; this module
+verifies leads, executes what has a legitimate unattended path, verifies results, attributes real players
+to the assets that produced them, and records what worked so the next Brain run can replicate it.
+
+Statuses of an action
+  PREPARED / QUEUED / EXECUTING   automatic path found
+  SUBMITTED -> LIVE / NO_RESPONSE  sent or submitted, then verified (24h / 72h / 7d)
+  MANUAL_ONLY                     login, CAPTCHA, account, payment or manual publication needed - parked in the
+                                  collapsed "optional human actions" list; the system never waits for it
+  DO_NOT_CONTACT                  an outreach check failed (see outreach.py)
+  FAILED / STALE                  attempted and gave up
+  ARCHIVED                        Worth One - frozen, never executed again, data kept
+
+Runs on worth-executor.timer (every 2 h) and right after every Brain run.
 """
 import json
 import re
-import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -17,144 +26,116 @@ import urllib.request
 import commands
 import db
 import outreach
+import wbc
 
-UA = "Mozilla/5.0 (compatible; WorthOneVerifier/1.0; +https://furiadelimon.github.io/worth-one/)"
+UA = "Mozilla/5.0 (compatible; WordsBeforeCoffee/1.0; +https://wordsbeforecoffee.com/)"
+SITE = wbc.SITE
+SENDER = "hello@wordsbeforecoffee.com"
 
-# Sites with a hand-verified, selector-level recipe for unattended form submission.
-# Each entry was inspected live with Playwright (real DOM, real field names/placeholders) before
-# being added — see section 5/25 of the executor directive: code drives known flows, never guesswork.
-# A recipe never fabricates a submitter identity: if the form carries an email field and the action's
-# payload has no submitter_email, it aborts with HUMAN_REQUIRED (WAITING_*_SENDER) instead of guessing
-# or leaving a half-filled submission behind.
+VERIFY_SCHEDULE = [86400, 3 * 86400, 7 * 86400]
+MAX_ATTEMPTS = 3
+LEAD_RECHECK_DAYS = 30
 
-def _has_unfillable_email(page, payload):
-    """True if the form exposes an email field we have no legitimate address to put in."""
-    if payload.get("submitter_email"):
-        return False
-    try:
-        return bool(page.evaluate("() => !!document.querySelector('input[type=email]')"))
-    except Exception:
-        return False
+# ---------------- form recipes (each inspected live before being added; never guess selectors) ----------------
+
+WBC_DESCRIPTION_EN = ("Four daily Spanish puzzles: three words to guess, a sliding word puzzle, a themed word search and a "
+                      "memory game. Same challenge for everyone, resets at midnight. No account, no ads.")
 
 
 def _confirmed(page):
     body = page.inner_text("body").lower()
-    return any(w in body for w in ("thank", "submitted", "review", "received", "reached us"))
+    return any(w in body for w in ("thank", "submitted", "review", "received", "reached us", "gracias", "recibido"))
 
 
 def _recipe_theforest(page, a):
-    payload = json.loads(a.get("payload") or "{}")
-    url = payload.get("target_url")
-    if not url:
-        return "FAILED", "payload missing target_url"
+    url = a.get("url") or f"{SITE}/?src=theforest"
     page.goto("https://theforest.link/", timeout=25000, wait_until="domcontentloaded")
     page.wait_for_timeout(800)
-    # the "Plant it" form lives behind a "Plant" tab (default view is the "Walk" random-discovery
-    # button); the input is present but hidden until that tab is selected.
     page.get_by_text("Plant", exact=True).click()
     page.wait_for_timeout(300)
     page.fill("input[name='website']", url)
-    # the page carries several type=submit buttons (a stray "Info", the "Plant" tab itself); only
-    # "Plant it" is the real submit for the form we just filled.
     page.get_by_role("button", name="Plant it", exact=True).click()
     page.wait_for_timeout(3000)
-    if _confirmed(page):
-        return "SUBMITTED", "planted: " + url
-    return "FAILED", "no confirmation text after submit"
-
-
-def _recipe_nosignuptools(page, a):
-    payload = json.loads(a.get("payload") or "{}")
-    for k in ("target_url", "site_name", "short_desc", "long_desc", "category"):
-        if not payload.get(k):
-            return "FAILED", f"payload missing {k}"
-    page.goto("https://nosignuptools.com/submit", timeout=25000, wait_until="networkidle")
-    page.wait_for_timeout(1000)
-    if _has_unfillable_email(page, payload):
-        return "HUMAN_REQUIRED", "WAITING_WORTH_ONE_SENDER: this form carries a contact-email field and no Worth One sender is configured yet"
-    page.fill("#name", payload["site_name"])
-    page.fill("#url", payload["target_url"])
-    page.fill("#shortDescription", payload["short_desc"])
-    page.fill("#longDescription", payload["long_desc"])
-    if page.query_selector("select"):
-        page.select_option("select", payload["category"])
-    for tag in payload.get("tags", []):
-        btn = page.get_by_role("button", name=tag, exact=True)
-        if btn.count():
-            btn.first.click()
-    if payload.get("submitter_name"):
-        page.fill("#submitterName", payload["submitter_name"])
-    if payload.get("submitter_email"):
-        page.fill("#submitterEmail", payload["submitter_email"])
-    page.click("button[type='submit']")
-    page.wait_for_timeout(2000)
-    if _confirmed(page):
-        return "SUBMITTED", "form submitted: " + payload["site_name"]
-    return "FAILED", "no confirmation text after submit"
+    return ("SUBMITTED", "planted: " + url) if _confirmed(page) else ("FAILED", "no confirmation text after submit")
 
 
 def _recipe_shouldseethis(page, a):
-    payload = json.loads(a.get("payload") or "{}")
-    for k in ("target_url", "site_name", "category", "what_it_does", "why_awesome"):
-        if not payload.get(k):
-            return "FAILED", f"payload missing {k}"
     page.goto("https://shouldseethis.com/submit/", timeout=25000, wait_until="networkidle")
     page.wait_for_timeout(1000)
-    if _has_unfillable_email(page, payload):
-        return "HUMAN_REQUIRED", "WAITING_WORTH_ONE_SENDER: this form requires a contact email and no Worth One sender is configured yet"
-    page.get_by_placeholder("https://example.com").fill(payload["target_url"])
-    page.get_by_placeholder("What's the name of this awesome site?").fill(payload["site_name"])
-    page.get_by_role("button", name=payload["category"], exact=True).click()
-    page.get_by_placeholder("What does this website do? Keep it short and sweet!").fill(payload["what_it_does"])
-    page.get_by_placeholder("Tell us what makes this website special! What made you stop and think 'I SHOULD SEE THIS'?").fill(payload["why_awesome"])
-    page.get_by_placeholder("Your name").fill(payload.get("submitter_name") or "Worth One?")
-    if payload.get("submitter_email"):
-        page.get_by_placeholder("your@email.com").fill(payload["submitter_email"])
+    page.get_by_placeholder("https://example.com").fill(f"{SITE}/?src=shouldseethis")
+    page.get_by_placeholder("What's the name of this awesome site?").fill("Words Before Coffee")
+    page.get_by_role("button", name="FUN", exact=True).click()
+    page.get_by_placeholder("What does this website do? Keep it short and sweet!").fill(
+        "Four daily Spanish brain games: guess three words, slide letters into words, a themed word search and a memory. Same puzzle for everyone, new at midnight.")
+    page.get_by_placeholder("Tell us what makes this website special! What made you stop and think 'I SHOULD SEE THIS'?").fill(
+        "A five-minute morning ritual in Spanish: no account, no ads, one shared puzzle a day, and a Coffee Score that sums up how you did across all four games.")
+    page.get_by_placeholder("Your name").fill("Words Before Coffee")
+    page.get_by_placeholder("your@email.com").fill(SENDER)
     page.get_by_role("button", name="SUBMIT WEBSITE").click()
-    page.wait_for_timeout(2000)
-    if _confirmed(page):
-        return "SUBMITTED", "form submitted: " + payload["site_name"]
-    return "FAILED", "no confirmation text after submit"
+    page.wait_for_timeout(2500)
+    return ("SUBMITTED", "form submitted: Words Before Coffee (FUN)") if _confirmed(page) else ("FAILED", "no confirmation text after submit")
+
+
+def _recipe_weirdwebtools(page, a):
+    page.goto("https://www.weirdwebtools.com/submit", timeout=25000, wait_until="networkidle")
+    page.wait_for_timeout(1500)
+    page.fill("input[name='name']", "Words Before Coffee")
+    page.fill("input[name='url']", f"{SITE}/?src=weirdwebtools")
+    page.fill("textarea[name='description']", WBC_DESCRIPTION_EN[:280])
+    page.check("input[name='type'][value='NO_LOGIN']")
+    page.select_option("select[name='category']", "GAME")
+    page.fill("input[name='tags']", "daily, spanish, word game, puzzle")
+    page.fill("input[name='email']", SENDER)
+    # honeypot field 'website' stays empty on purpose
+    page.wait_for_timeout(4000)
+    token = page.evaluate("() => (document.querySelector('input[name=cf-turnstile-response]')||{}).value || ''")
+    if not token:
+        return "MANUAL_ONLY", "Cloudflare Turnstile challenge did not clear unattended; submit by hand or email hello@weirdwebtools.com"
+    page.get_by_role("button", name="Submit for review").click()
+    page.wait_for_timeout(3000)
+    return ("SUBMITTED", "form submitted: Words Before Coffee (GAME, no login)") if _confirmed(page) else ("FAILED", "no confirmation text after submit")
+
+
+def _recipe_alldle(page, a):
+    payload = json.loads(a.get("payload") or "{}")
+    name, url = payload.get("name") or "Words Before Coffee", payload.get("target_url") or f"{SITE}/?src=alldle"
+    page.goto("https://www.alldle.net/submit", timeout=25000, wait_until="networkidle")
+    page.wait_for_timeout(1000)
+    page.fill("#name", name)
+    page.fill("#url", url)
+    page.click("form button[type='submit']")
+    page.wait_for_timeout(3000)
+    return ("SUBMITTED", f"submitted {name}") if _confirmed(page) else ("FAILED", "no confirmation text after submit")
 
 
 FORM_RECIPES = {
     "theforest.link": _recipe_theforest,
-    "nosignuptools.com": _recipe_nosignuptools,
     "shouldseethis.com": _recipe_shouldseethis,
+    "weirdwebtools.com": _recipe_weirdwebtools,
+    "alldle.net": _recipe_alldle,
 }
 
-# Assets/targets investigated this session that need a human for a specific, named reason.
-# Populated as the executor (or a human) discovers a hard blocker, so it is asked only once.
-KNOWN_HUMAN_ONLY = {
-    "AST-DIR-007": ("GitHub PR requires a public GitHub identity", "HUMAN_GITHUB_ACTION_REQUIRED", 3),
-    "AST-CP-001": ("target file lives in the Words Before Coffee repo, the LXC has no write access there", "paste the snippet from engine/cross-promo/wordsbeforecoffee-snippet.md into app/templates/_games_sheet.html", 2),
-    "AST-DIR-010": ("tinytools requires sign-in (email magic link / GitHub / Google) before submitting a tool", "sign in at https://tinytools.tools/submit and paste the Subscription Lifetime Receipt URL", 2),
-    "AST-SEO-002": ("Search Console access grant requires the owner's Google account", "add the service-account user in Search Console once verified", 3),
+# Targets that need a person for a specific, verified reason (login / captcha / account / payment).
+KNOWN_MANUAL = {
+    "AST-WBCWBCPO-001": "Miniplay/Minijuegos: developer account + support ticket (login)",
+    "AST-WBCWBCPO-002": "CrazyGames: developer account and an uploaded build (login + product work)",
+    "AST-WBCWBCPO-004": "Newgrounds: account required",
+    "AST-WBCWBCPO-005": "itch.io: account required",
+    "AST-WBCWBCED-003": "Mis Clases Locas contact form has a CAPTCHA",
+    "AST-WBCWBCPR-002": "Magisnet contact form has a CAPTCHA",
+    "AST-WBCWBCED-006": "Spanish Playground contact form has a CAPTCHA",
+    "AST-WBCWBCED-007": "Srta Spanish contact form has a CAPTCHA",
+    "AST-WBCWBCPO-003": "Coolmath Games: Google Form may require a Google sign-in; not inspected",
 }
-
-VERIFY_SCHEDULE = [86400, 3 * 86400, 7 * 86400]  # 24h, 72h, 7d after SUBMITTED
-MAX_ATTEMPTS = 3
-
-# Owner directive 2026-09-13: hello@wordsbeforecoffee.com is now authorized for both Worth One and
-# Words Before Coffee outreach, but "start conservatively, max 5-10/day per project, do not mass-send".
-# Enforced here (not in outreach.py) so both the CLI batch path and this automatic cycle share one limit.
-DAILY_EMAIL_CAP = 5
-
-
-def _brand_of(drop_id):
-    return "wbc" if drop_id == "WBC" else "worth_one"
-
-
-def _emails_sent_today(brand):
-    start = time.time() - (time.time() % 86400)
-    cond = "drop_id='WBC'" if brand == "wbc" else "(drop_id IS NULL OR drop_id!='WBC')"
-    row = db.q1(f"SELECT COUNT(*) n FROM assets WHERE submitted_ts>=? AND {cond}", (start,))
-    return row["n"] if row else 0
 
 
 def _host(url):
-    m = re.match(r"https?://([^/]+)", url or "")
+    m = re.match(r"https?://(?:www\.)?([^/:?#]+)", url or "")
     return m.group(1).lower() if m else ""
+
+
+def _slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")[:40]
 
 
 def score(a):
@@ -162,115 +143,156 @@ def score(a):
     return round((a.get("expected_users") or 0) * (a.get("confidence") or 0.5) * (a.get("strategic_value") or 0.5) / eff, 4)
 
 
-# ---------------- DISCOVER / QUALIFY / PREPARE: turn assets into actions ----------------
-
 DEFAULTS_BY_TYPE = {
-    # (expected_users, confidence, strategic_value, effort)
-    "newsletter": (15, 0.4, 0.6, 0.2),
-    "publisher": (12, 0.4, 0.6, 0.2),
-    "resource_page": (10, 0.4, 0.5, 0.2),
-    "directory": (10, 0.5, 0.5, 0.3),
-    "backlink": (5, 0.6, 0.7, 0.1),
-    "embed": (5, 0.4, 0.4, 0.1),
-    "press": (20, 0.3, 0.7, 0.3),
-    "localization": (5, 0.5, 0.4, 0.5),
+    # (expected_users, confidence, strategic_value, effort) - expected REAL PLAYERS, not visits
+    "directory": (12, 0.5, 0.7, 0.2),
+    "publisher": (15, 0.35, 0.6, 0.2),
+    "press": (40, 0.25, 0.7, 0.3),
+    "newsletter": (15, 0.35, 0.5, 0.2),
+    "resource_page": (10, 0.45, 0.7, 0.2),
+    "peer_site": (6, 0.4, 0.6, 0.2),
+    "portal": (30, 0.3, 0.5, 0.6),
+    "backlink": (4, 0.6, 0.6, 0.1),
+    "embed": (5, 0.4, 0.4, 0.3),
 }
 
 
+# ---------------- FREEZE: Worth One is archived ----------------
+
+def freeze_worth_one():
+    """Idempotent. Parks every Worth One action/asset; data stays; nothing external ever runs for it again."""
+    with db.tx() as c:
+        n1 = c.execute("UPDATE actions SET status='ARCHIVED', updated_ts=? WHERE (drop_id IS NULL OR drop_id!='WBC') AND status IN ('PREPARED','QUEUED','EXECUTING','HUMAN_REQUIRED','FAILED')", (time.time(),)).rowcount
+        n2 = c.execute("UPDATE assets SET status='archived', updated_ts=? WHERE (drop_id IS NULL OR drop_id!='WBC') AND status IN ('prepared','access_required')", (time.time(),)).rowcount
+        n3 = c.execute("UPDATE actions SET next_verify_at=NULL WHERE (drop_id IS NULL OR drop_id!='WBC') AND next_verify_at IS NOT NULL").rowcount
+        n4 = c.execute("UPDATE human_actions SET status='archived', resolved_ts=? WHERE status='open' AND (title LIKE '%Search Console%' OR title LIKE '%tinytools%' OR title LIKE '%Worth One%' OR title LIKE '%cross-promotion%' OR title LIKE '%GitHub%' OR title LIKE '%Subscription Lifetime%' OR title LIKE '%mailbox%' OR title LIKE '%Doomscroll%')", (time.time(),)).rowcount
+    db.set_setting("WORTH_ONE_STATUS", "ARCHIVED")
+    db.set_setting("ACTIVE_PROJECT", "WBC")
+    if n1 or n2 or n4:
+        db.log_activity("control", f"Worth One frozen: {n1} actions and {n2} assets archived, {n4} human actions closed; no further external actions", None, actor="executor")
+    return {"actions_archived": n1, "assets_archived": n2, "verifies_cancelled": n3, "human_actions_closed": n4}
+
+
+# ---------------- FIND OPPORTUNITY: leads -> verified assets ----------------
+
+def _reachable(url):
+    key = "url:" + url
+    c = db.cache_get(key, LEAD_RECHECK_DAYS * 86400)
+    if c and (c["status"] == "ok" or time.time() - c["ts"] < 2 * 86400):  # unreachable sites are retried after 2 days
+        return c["status"] == "ok", c["data"]
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            code = resp.status
+            body = resp.read(200000).decode("utf-8", "ignore")
+        ok = code < 400
+        title = re.search(r"<title[^>]*>(.*?)</title>", body, re.S | re.I)
+        data = {"http": code, "title": (title.group(1).strip()[:120] if title else "")}
+    except urllib.error.HTTPError as e:
+        ok, data = False, {"http": e.code}
+    except Exception as e:  # noqa: BLE001
+        ok, data = False, {"error": str(e)[:120]}
+    db.cache_set(key, "ok" if ok else "unreachable", data)
+    return ok, data
+
+
+def verify_leads():
+    """Brain-proposed leads (assets with status 'lead') become prepared (verified route), manual_only or
+    do_not_contact. Each domain/url is checked once (research cache); never re-investigated."""
+    out = {"prepared": 0, "manual_only": 0, "do_not_contact": 0, "unreachable": 0}
+    for a in db.q("SELECT * FROM assets WHERE drop_id='WBC' AND status='lead'"):
+        url = a.get("url") or ""
+        ok, data = _reachable(url) if url else (False, {"error": "no url"})
+        if not ok:
+            _set_asset(a["asset_id"], "unreachable", f"lead url not reachable: {json.dumps(data)[:120]}")
+            out["unreachable"] += 1
+            continue
+        if not a.get("src_tag"):
+            with db.tx() as c:
+                c.execute("UPDATE assets SET src_tag=? WHERE asset_id=?", (_slug(a["name"]), a["asset_id"]))
+        contact = (a.get("contact") or "").strip()
+        if contact and "@" in contact:
+            pol = outreach.policy_check(a)
+            if pol["status"] != "checked" or not pol["public_contact"] or pol["forbids_ai"] or pol["forbids_unsolicited"]:
+                why = ("address not found on a public page" if not pol["public_contact"] else
+                       "site refuses AI/automated messages" if pol["forbids_ai"] else
+                       "site refuses unsolicited pitches" if pol["forbids_unsolicited"] else f"site not readable ({pol['status']})")
+                _set_asset(a["asset_id"], "do_not_contact", "DO_NOT_CONTACT: " + why + (" | " + pol["evidence"][:200] if pol["evidence"] else ""))
+                out["do_not_contact"] += 1
+                continue
+            if a.get("pitch") and (a.get("pitch_source") in ("brain", "human")):
+                _set_asset(a["asset_id"], "prepared", "verified: public contact, no prohibitions; pitch ready")
+            else:
+                _set_asset(a["asset_id"], "needs_pitch", "verified: public contact, no prohibitions; waiting for an authored pitch")
+            out["prepared"] += 1
+            continue
+        if _host(url) in FORM_RECIPES:
+            _set_asset(a["asset_id"], "prepared", "verified: tested form recipe available")
+            out["prepared"] += 1
+            continue
+        _set_asset(a["asset_id"], "manual_only", "MANUAL_ONLY: no public email and no tested login-free form; " + (a.get("notes") or "")[:120])
+        out["manual_only"] += 1
+    return out
+
+
+def _set_asset(asset_id, status, result=None):
+    with db.tx() as c:
+        if result is None:
+            c.execute("UPDATE assets SET status=?, updated_ts=? WHERE asset_id=?", (status, time.time(), asset_id))
+        else:
+            c.execute("UPDATE assets SET status=?, result=?, updated_ts=? WHERE asset_id=?", (status, result[:300], time.time(), asset_id))
+
+
+# ---------------- DISCOVER / QUALIFY ----------------
+
 def sync_from_assets():
-    """DISCOVER+PREPARE: one open action per asset still needing work. Idempotent."""
     created = 0
-    assets = db.q("SELECT * FROM assets WHERE status IN ('prepared','access_required')")
-    for a in assets:
-        action_id = "ACT-" + a["asset_id"]
+    for a in db.q("SELECT * FROM assets WHERE drop_id='WBC' AND status='prepared'"):
         eu, conf, sv, eff = DEFAULTS_BY_TYPE.get(a["type"], (8, 0.4, 0.5, 0.3))
-        made = db.add_action(
-            action_id, "pending_classification",
-            asset_id=a["asset_id"], target=a["name"], url=a["url"], drop_id=a["drop_id"],
-            expected_users=eu, confidence=conf, strategic_value=sv, effort=eff,
-            status="PREPARED",
-        )
-        if made:
+        if db.add_action("ACT-" + a["asset_id"], "pending_classification", asset_id=a["asset_id"], target=a["name"], url=a["url"],
+                         drop_id="WBC", expected_users=eu, confidence=conf, strategic_value=sv, effort=eff, status="PREPARED"):
             created += 1
     return created
 
 
 def classify(a):
-    """Return (auto_type_or_None, reason, human_action_text, estimated_minutes)."""
+    """(auto_type or None, manual_reason)."""
     asset_id = a.get("asset_id")
-    if asset_id in KNOWN_HUMAN_ONLY:
-        reason, text, mins = KNOWN_HUMAN_ONLY[asset_id]
-        return None, reason, text, mins
-
+    if asset_id in KNOWN_MANUAL:
+        return None, KNOWN_MANUAL[asset_id]
     asset = db.q1("SELECT * FROM assets WHERE asset_id=?", (asset_id,)) if asset_id else None
     if asset and asset.get("contact") and "@" in asset["contact"] and asset.get("pitch"):
-        # DAILY_EMAIL_CAP is enforced live in run_cycle()'s execution loop, not here: classify()
-        # runs once for the whole queue *before* any of this cycle's sends happen, so a check
-        # against historical submitted_ts here would see the same (stale) count for every action
-        # and cap nothing within a single cycle — exactly the bug that let 53 emails go out in one
-        # batch on 2026-09-13. Do not reintroduce a per-item cap check in this function.
-        return "email_outreach", None, None, None
-
-    if asset and asset["type"] == "backlink" and "indexnow" in (asset["name"] or "").lower():
-        return "indexnow", None, None, None
-
-    url = a.get("url") or (asset or {}).get("url")
-    if url and _host(url) in FORM_RECIPES:
-        return "form_submit", None, None, None
-
-    # No verified automatic path: human, but keep the reason honest and specific.
-    notes = (asset or {}).get("notes") or ""
-    return None, "no automated path yet (no email contact, no login-free public form recipe)", \
-        notes or f"open {url}, follow the submit/contact flow described in the asset notes", 3
+        return "email_outreach", None
+    url = a.get("url") or (asset or {}).get("url") or ""
+    if _host(url) in FORM_RECIPES:
+        return "form_submit", None
+    notes = ((asset or {}).get("notes") or "").lower()
+    if "login" in notes or "captcha" in notes or "account" in notes or "cuenta" in notes:
+        return None, "needs login, account or CAPTCHA: " + notes[:140]
+    if asset and asset.get("contact") and "@" in asset["contact"]:
+        return None, "public email found but no authored pitch yet (the Brain writes it next run)"
+    return None, "no autonomous route: contact form without a tested recipe, no public email"
 
 
-# ---------------- EXECUTE handlers (deterministic; no model calls) ----------------
+# ---------------- EXECUTE ----------------
 
 def h_email_outreach(a):
     res = outreach.send(a["asset_id"])
     if res == "sent":
-        return "SUBMITTED", "sent"
+        return "SUBMITTED", "sent after 8/8 checks"
     if res.startswith("already contacted"):
         return "SUBMITTED", res
+    if res.startswith("blocked:"):
+        return "DO_NOT_CONTACT", res
     if "smtp not configured" in res:
-        return "HUMAN_REQUIRED", res
+        return "MANUAL_ONLY", res
     return "FAILED", res
 
 
-def h_indexnow(a):
-    try:
-        r = subprocess.run(["/usr/local/bin/worth-indexnow"], capture_output=True, text=True, timeout=30)
-        ok = r.returncode == 0
-        return ("SUBMITTED", "indexnow ping run") if ok else ("FAILED", (r.stderr or "")[:300])
-    except Exception as e:
-        return "FAILED", str(e)[:300]
-
-
-def h_verify_http(a):
-    url = a.get("url")
-    if not url:
-        return "FAILED", "no url to verify"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": UA})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            code = resp.status
-            body = resp.read(30000).decode("utf-8", "ignore")
-        payload = json.loads(a.get("payload") or "{}")
-        check = (payload.get("check_text") or "").lower()
-        ok = code < 400 and (not check or check in body.lower())
-        detail = f"HTTP {code}" + (f", check_text {'found' if check in body.lower() else 'MISSING'}" if check else "")
-        return ("LIVE", detail) if ok else ("FAILED", detail)
-    except urllib.error.HTTPError as e:
-        return "FAILED", f"HTTP {e.code}"
-    except Exception as e:
-        return "FAILED", str(e)[:200]
-
-
 def h_form_submit(a):
-    host = _host(a.get("url"))
-    recipe = FORM_RECIPES.get(host)
+    recipe = FORM_RECIPES.get(_host(a.get("url")))
     if not recipe:
-        return "HUMAN_REQUIRED", "no tested recipe for this host"
+        return "MANUAL_ONLY", "no tested recipe for this host"
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -282,157 +304,179 @@ def h_form_submit(a):
     return result
 
 
-HANDLERS = {
-    "email_outreach": h_email_outreach,
-    "indexnow": h_indexnow,
-    "verify_http": h_verify_http,
-    "form_submit": h_form_submit,
-}
+def h_verify_http(a):
+    url = a.get("url")
+    if not url:
+        return "FAILED", "no url to verify"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            code = resp.status
+            body = resp.read(400000).decode("utf-8", "ignore").lower()
+        payload = json.loads(a.get("payload") or "{}")
+        check = (payload.get("check_text") or "wordsbeforecoffee").lower()
+        ok = code < 400 and check in body
+        return ("LIVE", f"HTTP {code}, '{check}' found on page") if ok else ("PENDING", f"HTTP {code}, '{check}' not on page yet")
+    except urllib.error.HTTPError as e:
+        return "PENDING", f"HTTP {e.code}"
+    except Exception as e:  # noqa: BLE001
+        return "PENDING", str(e)[:200]
 
 
-# ---------------- VERIFY loop ----------------
+HANDLERS = {"email_outreach": h_email_outreach, "form_submit": h_form_submit}
 
-def _next_check(attempts):
-    return VERIFY_SCHEDULE[min(attempts, len(VERIFY_SCHEDULE) - 1)]
+
+# ---------------- MEASURE RESULT: verify listings + players attributed ----------------
+
+def _players_from(asset):
+    """Evidence from the product itself: players whose first visit carried this asset's src tag or referrer host."""
+    m = wbc.latest()
+    tag = wbc.src_tag_of(asset)
+    host = _host(asset.get("url") or "")
+    total = 0
+    for r in (m.get("acquisition") or {}).get("30d", []):
+        if (tag and r["source"] == tag) or (host and r["source"] == "ref:" + host):
+            total += r.get("users", 0)
+    return total
 
 
 def run_verify():
-    due = db.q("SELECT * FROM actions WHERE status='SUBMITTED' AND next_verify_at IS NOT NULL AND next_verify_at<=?", (time.time(),))
-    out = {"LIVE": 0, "NO_RESPONSE": 0}
+    due = db.q("SELECT * FROM actions WHERE drop_id='WBC' AND status='SUBMITTED' AND next_verify_at IS NOT NULL AND next_verify_at<=?", (time.time(),))
+    out = {"LIVE": 0, "NO_RESPONSE": 0, "pending": 0}
     for a in due:
-        check_url = a.get("url")
-        status, result = h_verify_http({**a, "url": check_url}) if check_url else ("FAILED", "no url")
+        asset = db.q1("SELECT * FROM assets WHERE asset_id=?", (a.get("asset_id"),)) or {}
+        players = _players_from(asset)
+        if players:
+            status, result = "LIVE", f"{players} players arrived from this source (30d)"
+        elif a.get("type") == "form_submit" or asset.get("type") in ("directory", "resource_page", "peer_site", "portal"):
+            status, result = h_verify_http({**a, "url": asset.get("url") or a.get("url")})
+        else:
+            status, result = "PENDING", "no players from this source yet"
         attempts = (a["attempts"] or 0) + 1
         if status == "LIVE":
             db.update_action(a["action_id"], status="LIVE", result=result, attempts=attempts, next_verify_at=None)
+            _set_asset(a["asset_id"], "live", result)
+            db.log_activity("verify", f"LIVE: {a.get('target')} - {result}", "WBC", actor="executor")
             out["LIVE"] += 1
-            if a.get("asset_id"):
-                with db.tx() as c:
-                    c.execute("UPDATE assets SET status='live', result=?, updated_ts=? WHERE asset_id=?", (result, time.time(), a["asset_id"]))
         elif attempts >= MAX_ATTEMPTS:
             db.update_action(a["action_id"], status="NO_RESPONSE", result=result, attempts=attempts, next_verify_at=None)
             out["NO_RESPONSE"] += 1
         else:
-            db.update_action(a["action_id"], attempts=attempts, next_verify_at=time.time() + _next_check(attempts))
+            db.update_action(a["action_id"], attempts=attempts, result=result, next_verify_at=time.time() + VERIFY_SCHEDULE[min(attempts, len(VERIFY_SCHEDULE) - 1)])
+            out["pending"] += 1
     return out
 
 
-# ---------------- Telegram batching ----------------
+# ---------------- LEARN ----------------
 
-def _should_notify(a):
-    if not a.get("telegram_notified_ts"):
-        return True
-    age_days = (time.time() - a["telegram_notified_ts"]) / 86400
-    return age_days >= 3  # section 23: only re-notify if it's been sitting a while
-
-
-def _format_telegram(human, executed, verified):
-    total_min = sum((a.get("estimated_human_time") or 3) for a in human)
-    ranked = sorted(human, key=lambda x: -(x.get("priority") or 0))
-    n = len(ranked)
-    # relative thirds, not fixed score thresholds: the label should stay meaningful as the
-    # scoring defaults evolve, instead of every item landing in the same bucket.
-    labels = {}
-    for i, a in enumerate(ranked):
-        labels[a["action_id"]] = "HIGH" if i < max(1, n // 3) else "LOW" if i >= n - max(1, n // 3) else "MEDIUM"
-    lines = ["WORTH ONE - HUMAN ACTIONS", "", "Automatic work completed:"]
-    lines.append(f"- {executed.get('SUBMITTED', 0) + executed.get('LIVE', 0)} actions executed")
-    lines.append(f"- {executed.get('SUBMITTED', 0)} submissions sent")
-    lines.append(f"- {verified.get('LIVE', 0)} listings verified live")
-    if executed.get("FAILED"):
-        lines.append(f"- {executed['FAILED']} failed (will retry)")
-    lines.append("")
-    lines.append(f"Human actions pending: {len(human)}")
-    lines.append("")
-    for i, a in enumerate(ranked, 1):
-        pr = labels[a["action_id"]]
-        lines.append(f"{i}. [{pr}] {a.get('target') or a['action_id']}")
-        lines.append(f"   Action: {a.get('human_action_text') or a.get('human_required_reason') or 'see control center'}")
-        if a.get("url"):
-            lines.append(f"   URL: {a['url']}")
-        lines.append(f"   Estimated time: {a.get('estimated_human_time') or 3} min")
-    lines.append("")
-    lines.append(f"TOTAL ESTIMATED HUMAN TIME: {total_min} minutes")
-    return "\n".join(lines)
+def learn():
+    """Attribute players to assets; when something works, record the pattern to replicate (the Brain reads it)."""
+    try:
+        winners = wbc.attribute()
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e)[:120], "winners": []}
+    if winners:
+        w = winners[0]
+        pattern = (f"{w['type']} '{w['name']}' produced {w['users_30d']} players in 30d (conversion {w['conversion']:.0%}). "
+                   f"Find 20 more sites of the same kind ({w['type']}, same audience/country/language) and prepare them first.")
+        if db.get_setting("WINNING_PATTERN") != pattern:
+            db.set_setting("WINNING_PATTERN", pattern)
+            db.log_activity("learn", "WINNER: " + pattern, "WBC", actor="executor")
+            commands.notify("WBC growth: " + pattern)
+    return {"winners": winners}
 
 
-# ---------------- Main cycle ----------------
+# ---------------- main cycle ----------------
+
+def _budget_ok():
+    try:
+        budget = float(db.get_setting("AI_DAILY_BUDGET_USD", "1.0"))
+    except ValueError:
+        budget = 1.0
+    spent = db.q1("SELECT COALESCE(SUM(usd),0) usd FROM ai_cost WHERE ts>=?", (time.time() - (time.time() % 86400),))["usd"]
+    return spent < budget, spent, budget
+
 
 def run_cycle():
+    frozen = freeze_worth_one()
+    metrics_ok = True
+    try:
+        wbc.snapshot()
+    except Exception:  # noqa: BLE001
+        metrics_ok = False
+    leads = verify_leads()
     discovered = sync_from_assets()
 
-    queue = db.q("SELECT * FROM actions WHERE status IN ('PREPARED','QUEUED')")
-    auto, newly_human = [], 0
+    queue = db.q("SELECT * FROM actions WHERE drop_id='WBC' AND status IN ('PREPARED','QUEUED')")
+    auto, manual = [], 0
     for a in queue:
-        auto_type, reason, human_text, mins = classify(a)
+        auto_type, reason = classify(a)
         if auto_type:
             p = score(a)
             db.update_action(a["action_id"], type=auto_type, status="QUEUED", priority=p)
             a["type"], a["priority"] = auto_type, p
             auto.append(a)
         else:
-            db.update_action(a["action_id"], status="HUMAN_REQUIRED", priority=score(a),
-                              human_required_reason=reason, human_action_text=human_text,
-                              estimated_human_time=mins)
-            newly_human += 1
+            db.update_action(a["action_id"], status="MANUAL_ONLY", priority=score(a), human_required_reason=reason, human_action_text=reason)
+            _set_asset(a["asset_id"], "manual_only", "MANUAL_ONLY: " + reason)
+            manual += 1
 
     auto.sort(key=lambda a: -(a.get("priority") or 0))
-    executed, rate_limited = {}, 0
-    # live per-brand counter, seeded from what's already gone out today (not just this cycle) —
-    # this is the actual enforcement point for DAILY_EMAIL_CAP, checked before each send as it
-    # happens, not once for the whole batch up front (see the note in classify()).
-    email_sent_this_cycle = {"worth_one": _emails_sent_today("worth_one"), "wbc": _emails_sent_today("wbc")}
+    executed, capped = {}, 0
+    emails_left = outreach.daily_cap() - outreach.sent_today("wbc")
+    db.set_setting("CURRENT_ACTION", f"Executor cycle: {len(auto)} queued, {emails_left} email slots left today")
     for a in auto:
         if a["type"] == "email_outreach":
-            brand = _brand_of(db.q1("SELECT drop_id FROM assets WHERE asset_id=?", (a["asset_id"],))["drop_id"])
-            if email_sent_this_cycle[brand] >= DAILY_EMAIL_CAP:
-                rate_limited += 1
-                continue  # leave QUEUED; retried next cycle once under the cap (today or tomorrow)
+            if emails_left <= 0:
+                capped += 1
+                continue
         db.update_action(a["action_id"], status="EXECUTING", attempts=(a["attempts"] or 0) + 1, last_attempt=time.time())
         try:
             status, result = HANDLERS[a["type"]](a)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             status, result = "FAILED", str(e)[:300]
-        if a["type"] == "email_outreach" and status == "SUBMITTED":
-            email_sent_this_cycle[brand] += 1
+        if a["type"] == "email_outreach" and status == "SUBMITTED" and "sent" in result:
+            emails_left -= 1
         extra = {}
         if status == "SUBMITTED":
             extra["next_verify_at"] = time.time() + VERIFY_SCHEDULE[0]
-        elif status == "HUMAN_REQUIRED":
-            # a handler (not classify()) decided this at execution time — carry its specific
-            # reason into the columns the Telegram batch actually reads, instead of the generic
-            # "see control center" fallback.
+            _set_asset(a["asset_id"], "submitted", result)
+            db.set_setting("LAST_GROWTH_ACTION", f"{a['type']}: {a.get('target')} ({result[:60]}) at {db.day_of()}")
+        elif status == "MANUAL_ONLY":
             extra["human_required_reason"] = (result or "")[:200]
             extra["human_action_text"] = (result or "")[:200]
-            extra["estimated_human_time"] = a.get("estimated_human_time") or 3
+            _set_asset(a["asset_id"], "manual_only", "MANUAL_ONLY: " + (result or "")[:200])
+        elif status == "DO_NOT_CONTACT":
+            pass  # outreach.send already marked the asset
         elif status == "FAILED" and (a["attempts"] or 0) + 1 >= MAX_ATTEMPTS:
             status = "STALE"
         db.update_action(a["action_id"], status=status, result=(result or "")[:500], **extra)
         executed[status] = executed.get(status, 0) + 1
-        if status in ("SUBMITTED", "LIVE") and a.get("asset_id"):
-            with db.tx() as c:
-                c.execute("UPDATE assets SET status=?, result=?, updated_ts=? WHERE asset_id=?",
-                          ("live" if status == "LIVE" else "submitted", result, time.time(), a["asset_id"]))
-        db.log_activity(a["type"], f"{a['action_id']} {status}: {(result or '')[:90]}", a.get("drop_id"), actor="executor")
+        db.log_activity(a["type"], f"{a.get('target')}: {status} - {(result or '')[:100]}", "WBC", actor="executor")
 
     verified = run_verify()
+    learned = learn()
+    budget_ok, spent, budget = _budget_ok()
 
-    pending_human = db.q("SELECT * FROM actions WHERE status='HUMAN_REQUIRED' ORDER BY priority DESC")
-    to_notify = [a for a in pending_human if _should_notify(a)]
-    telegram_sent = False
-    if to_notify:
-        msg = _format_telegram(to_notify, executed, verified)
-        if commands.notify(msg):
-            telegram_sent = True
-            now = time.time()
-            for a in to_notify:
-                db.update_action(a["action_id"], telegram_notified_ts=now)
-            db.log_telegram_batch(len(to_notify), sum((a.get("estimated_human_time") or 3) for a in to_notify), [a["action_id"] for a in to_notify])
-
-    summary = f"discovered={discovered} executed={executed} verified={verified} human_pending={len(pending_human)} rate_limited={rate_limited} telegram_sent={telegram_sent}"
+    manual_total = db.q1("SELECT COUNT(*) n FROM actions WHERE drop_id='WBC' AND status='MANUAL_ONLY'")["n"]
+    queued_total = db.q1("SELECT COUNT(*) n FROM actions WHERE drop_id='WBC' AND status IN ('QUEUED','PREPARED')")["n"]
+    nxt = ("send the next verified pitch when a daily email slot opens" if queued_total else
+           "wait for the Brain to propose new verified leads" if not learned.get("winners") else
+           "replicate the winning pattern: " + db.get_setting("WINNING_PATTERN", "")[:80])
+    db.set_setting("NEXT_ACTION", nxt)
+    summary = (f"leads={leads} discovered={discovered} executed={executed} capped={capped} verified={verified} "
+               f"winners={len(learned.get('winners') or [])} manual_only={manual_total} metrics={'ok' if metrics_ok else 'unavailable'} "
+               f"ai_spent_today=${spent:.2f}/{budget:.2f}")
     db.record_run("executor", "ok", summary)
-    return {
-        "discovered": discovered, "executed": executed, "verified": verified,
-        "newly_human": newly_human, "human_pending": len(pending_human), "rate_limited": rate_limited,
-        "telegram_sent": telegram_sent, "summary": summary,
-    }
+
+    notable = []
+    if executed.get("SUBMITTED"):
+        notable.append(f"{executed['SUBMITTED']} growth actions executed (emails after 8 checks / form submissions)")
+    if verified.get("LIVE"):
+        notable.append(f"{verified['LIVE']} listings confirmed LIVE")
+    if learned.get("winners"):
+        notable.append("winning source: " + learned["winners"][0]["name"])
+    if notable:
+        commands.notify("Words Before Coffee - " + "; ".join(notable))
+    return {"frozen": frozen, "leads": leads, "discovered": discovered, "executed": executed, "capped": capped,
+            "verified": verified, "learned": learned, "manual_only": manual_total, "summary": summary}

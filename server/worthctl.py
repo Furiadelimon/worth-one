@@ -24,6 +24,13 @@
   worthctl ingest_targets <file.json>      load a verified distribution_targets.json into assets (idempotent)
   worthctl ingest_wbc <file.json>          load wbc_distribution_targets.json into assets, tagged drop_id=WBC
   worthctl queue_report                    AUTO QUEUED / WAITING HUMAN / WAITING SENDER / REJECTED-STALE counts
+
+Words Before Coffee (active project since 2026-09-13):
+  worthctl state --wbc                     compact growth state for the brain (metrics + what is known)
+  worthctl wbc                             print the product metrics as seen by the engine
+  worthctl freeze                          archive every Worth One action/asset (idempotent)
+  worthctl evaluate <asset_id>             run the 8 outreach checks on a pitch without sending
+  worthctl leads                           list WBC assets by status (lead / prepared / manual_only / do_not_contact ...)
 """
 import json
 import os
@@ -71,6 +78,64 @@ def status():
     print(f"fund real={f['real']} / {f['car_target']}  worth1+={f['people_worth_1plus']} intended={f['intended_value']} ready={f['ready_to_support']}")
     for a in db.q("SELECT id,title FROM human_actions WHERE status='open'"):
         print(f"HUMAN ACTION REQUIRED #{a['id']}: {a['title']}")
+
+
+def _hosts_known():
+    import re
+    hosts = set()
+    for a in db.q("SELECT url, contact_source FROM assets WHERE drop_id='WBC'"):
+        for u in (a.get("url"), a.get("contact_source")):
+            m = re.match(r"https?://(?:www\.)?([^/:?#]+)", u or "")
+            if m:
+                hosts.add(m.group(1).lower())
+    for r in db.q("SELECT key FROM research_cache"):
+        m = re.match(r"(?:url:https?://(?:www\.)?|policy:)([^/:?#]+)", r["key"])
+        if m:
+            hosts.add(m.group(1).lower())
+    return sorted(hosts)
+
+
+def state_wbc():
+    import wbc
+    m = wbc.latest()
+    now = time.time()
+    s = db.all_settings()
+    acq = m.get("acquisition") or {}
+    out = {
+        "settings": {k: s.get(k) for k in ("PROJECT_STATUS", "AI_DAILY_BUDGET_USD", "WBC_EMAIL_CAP", "WINNING_PATTERN", "NEXT_ACTION")},
+        "ai_spent_today": round(db.q1("SELECT COALESCE(SUM(usd),0) usd FROM ai_cost WHERE ts>=?", (now - (now % 86400),))["usd"], 4),
+        "metrics_stale": bool(m.get("stale")),
+        "users": m.get("windows"),
+        "dau_last_14": (m.get("dau") or [])[-14:],
+        "games_30d": (m.get("games") or {}).get("30d"),
+        "game_verdicts": wbc.game_verdicts(m) if m.get("games") else {},
+        "acquisition_7d": (acq.get("7d") or [])[:15],
+        "acquisition_30d": (acq.get("30d") or [])[:15],
+        "top_source": acq.get("top_source"), "fastest_growing_source": acq.get("fastest_growing_source"), "best_converting_source": acq.get("best_converting_source"),
+        "countries_30d": ((m.get("countries") or {}).get("30d") or [])[:10],
+        "retention": m.get("retention"),
+        "shares": m.get("shares"), "referral_users": m.get("referral_users"),
+        "winning_pattern": s.get("WINNING_PATTERN", ""),
+        "assets_by_status": db.q("SELECT status, COUNT(*) n FROM assets WHERE drop_id='WBC' GROUP BY status"),
+        "live": db.q("SELECT name, type, result FROM assets WHERE drop_id='WBC' AND status='live' ORDER BY updated_ts DESC LIMIT 15"),
+        "submitted_awaiting": db.q("SELECT name, type FROM assets WHERE drop_id='WBC' AND status='submitted' ORDER BY updated_ts DESC LIMIT 25"),
+        "manual_only": db.q("SELECT name, result FROM assets WHERE drop_id='WBC' AND status='manual_only' ORDER BY updated_ts DESC LIMIT 15"),
+        "do_not_contact": db.q("SELECT name, result FROM assets WHERE drop_id='WBC' AND status IN ('do_not_contact','pitch_rejected') ORDER BY updated_ts DESC LIMIT 15"),
+        "needs_pitch": db.q("SELECT asset_id, name, url, contact, pitch_lang FROM assets WHERE drop_id='WBC' AND status='needs_pitch' LIMIT 10"),
+        "already_known_hosts": _hosts_known(),
+        "emails_today": db.q1("SELECT COUNT(*) n FROM email_log WHERE status='sent' AND ts>=?", (now - (now % 86400),))["n"],
+        "clean_sends": db.clean_sends(), "complaints": db.complaints(),
+        "recent": db.q("SELECT channel, substr(message,1,110) message FROM activity WHERE drop_id='WBC' ORDER BY ts DESC LIMIT 12"),
+        "last_insights": _last_insights(),
+    }
+    print(json.dumps(out, indent=1, default=str))
+
+
+def _last_insights():
+    try:
+        return json.load(open("/var/lib/worth-one/insights.json", encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 def state(compact=False):
@@ -123,7 +188,28 @@ def main(argv):
     if cmd == "status":
         status()
     elif cmd == "state":
-        state("--compact" in args)
+        if "--wbc" in args:
+            state_wbc()
+        else:
+            state("--compact" in args)
+    elif cmd == "wbc":
+        import wbc
+        print(json.dumps(wbc.latest(), indent=1, default=str)[:20000])
+    elif cmd == "freeze":
+        import executor
+        print(json.dumps(executor.freeze_worth_one()))
+    elif cmd == "evaluate":
+        import outreach
+        a = db.q1("SELECT * FROM assets WHERE asset_id=?", (args[0],))
+        ok, checks, subject, body = outreach.evaluate(a, force_policy="--force" in args)
+        print("RESULT:", "PASS - would send" if ok else "BLOCKED")
+        for k, v in checks.items():
+            print(f"  {'ok ' if v['ok'] else 'FAIL'} {k}: {v['detail'][:160]}")
+        print("\n--- rendered ---\nSubject:", subject, "\n\n" + body)
+    elif cmd == "leads":
+        rows = db.q("SELECT asset_id, status, type, name, contact, substr(result,1,70) result FROM assets WHERE drop_id='WBC' ORDER BY status, updated_ts DESC")
+        for r in rows:
+            print(f"{r['asset_id']:<20} {r['status']:<15} {r['type']:<13} {(r['name'] or '')[:34]:<34} {(r['contact'] or '')[:30]:<30} {r['result'] or ''}")
     elif cmd == "scorecard":
         print(json.dumps(stats.scorecard(1), indent=1, default=str))
     elif cmd == "winners":

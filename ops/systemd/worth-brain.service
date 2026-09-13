@@ -1,5 +1,5 @@
 [Unit]
-Description=Worth One autonomous brain run (trends, ideas, content, growth decisions)
+Description=Words Before Coffee autonomous growth run (measure, analyse, find, learn)
 
 [Service]
 Type=oneshot

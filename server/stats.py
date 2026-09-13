@@ -1,7 +1,12 @@
-"""Metric computations. Conventional software, no AI. Everything derived from the events table."""
+"""Metric computations. Conventional software, no AI.
+
+Worth One metrics (events table) are kept for the archived project. `wbc_control()` builds the payload for the
+WORDS BEFORE COFFEE - GROWTH CONTROL CENTER from the product's own growth API (server/wbc.py)."""
 import json
 import time
 
+import db
+import wbc
 from db import q, q1, all_settings
 
 
@@ -263,4 +268,99 @@ def scorecard(days=1):
         "tiktok_views": tt_views, "tiktok_users": tiktok,
         "ai_cost_usd": round(usd, 4), "users_per_eur_ai": round(c["users"] / (usd * 0.92), 1) if usd > 0.001 else None,
         "viral": viral_mode(),
+    }
+
+
+# =====================================================================================
+# WORDS BEFORE COFFEE - GROWTH CONTROL CENTER
+# =====================================================================================
+
+RELEVANT_CHANNELS = ("outreach", "email_outreach", "form_submit", "verify", "learn", "seo", "brain", "lead", "directory",
+                     "publisher", "press", "resource_page", "newsletter", "peer_site", "portal", "backlink", "embed",
+                     "experiments", "content", "social", "product", "indexnow", "localization")
+TECH_NOISE = ("SET API_URL", "SET PUBLIC_URL", "Published new API tunnel", "health", "Brain run", "in progress")
+
+
+def _agent_perf(days):
+    since = _since(days)
+    ok = q1("SELECT COUNT(*) n FROM actions WHERE drop_id='WBC' AND status IN ('SUBMITTED','LIVE') AND last_attempt>=?", (since,))["n"]
+    bad = q1("SELECT COUNT(*) n FROM actions WHERE drop_id='WBC' AND status IN ('FAILED','STALE','NO_RESPONSE','DO_NOT_CONTACT') AND last_attempt>=?", (since,))["n"]
+    return ok, bad
+
+
+def recent_activity(limit=40):
+    """Only actions that matter to growth; technical noise grouped into one line per day."""
+    rows = q("SELECT ts, channel, message, actor, drop_id FROM activity ORDER BY ts DESC LIMIT 400")
+    out, tech = [], {}
+    for r in rows:
+        msg = r["message"] or ""
+        noisy = r["channel"] in ("ops", "control") or any(t in msg for t in TECH_NOISE) or r["channel"] == "run"
+        if noisy and "frozen" not in msg and "budget" not in msg.lower():
+            d = db.day_of(r["ts"])
+            tech[d] = tech.get(d, 0) + 1
+            continue
+        if r["channel"] not in RELEVANT_CHANNELS and r["actor"] not in ("executor", "owner"):
+            continue
+        out.append(r)
+        if len(out) >= limit:
+            break
+    grouped = [{"ts": time.mktime(time.strptime(d, "%Y-%m-%d")), "channel": "technical", "message": f"{n} technical events (config, health, cron)", "actor": "system", "grouped": True}
+               for d, n in list(tech.items())[:7]]
+    return sorted(out + grouped, key=lambda r: -r["ts"])[:limit]
+
+
+def wbc_control():
+    m = wbc.latest()
+    s = all_settings()
+    now = time.time()
+    verdicts = wbc.game_verdicts(m) if m.get("games") else {}
+    ok24, bad24 = _agent_perf(1)
+    ok7, bad7 = _agent_perf(7)
+    cost = {"d1": ai_cost(1), "d30": ai_cost(30), "all": ai_cost()}
+    new30 = ((m.get("windows") or {}).get("30d") or {}).get("new_users") or 0
+    new1 = ((m.get("windows") or {}).get("24h") or {}).get("new_users") or 0
+    new7 = ((m.get("windows") or {}).get("7d") or {}).get("new_users") or 0
+    spent_today = q1("SELECT COALESCE(SUM(usd),0) usd FROM ai_cost WHERE ts>=?", (now - (now % 86400),))["usd"]
+    live = q("SELECT asset_id, type, name, url, result, updated_ts FROM assets WHERE drop_id='WBC' AND status IN ('live','accepted','published') ORDER BY updated_ts DESC LIMIT 20")
+    submitted = q("SELECT asset_id, type, name, url, result, updated_ts, submitted_ts FROM assets WHERE drop_id='WBC' AND status='submitted' ORDER BY COALESCE(submitted_ts, updated_ts) DESC LIMIT 20")
+    new_opps = q1("SELECT COUNT(*) n FROM assets WHERE drop_id='WBC' AND status IN ('lead','prepared','needs_pitch') AND created_ts>=?", (_since(7),))["n"]
+    manual = q("""SELECT a.action_id, a.target, a.url, a.human_action_text reason, a.priority, a.updated_ts, ast.type
+                  FROM actions a LEFT JOIN assets ast ON ast.asset_id=a.asset_id
+                  WHERE a.drop_id='WBC' AND a.status='MANUAL_ONLY' ORDER BY a.priority DESC LIMIT 40""")
+    last_exec = q1("SELECT ts, status, summary FROM runs WHERE kind='executor' ORDER BY ts DESC LIMIT 1")
+    last_brain = q1("SELECT ts, status, summary FROM runs WHERE kind='brain' ORDER BY ts DESC LIMIT 1")
+    queue = {r["status"]: r["n"] for r in q("SELECT status, COUNT(*) n FROM actions WHERE drop_id='WBC' GROUP BY status")}
+    emails = q("SELECT ts, asset_id, to_addr, subject, status, complaint FROM email_log ORDER BY ts DESC LIMIT 20")
+    return {
+        "now": now,
+        "project": {"name": "Words Before Coffee", "site": wbc.SITE, "status": s.get("PROJECT_STATUS"), "worth_one": s.get("WORTH_ONE_STATUS", "ARCHIVED"),
+                    "metrics_configured": wbc.configured(), "metrics_stale": bool(m.get("stale")), "metrics_error": m.get("error")},
+        "metrics": m,
+        "verdicts": verdicts,
+        "expansion": {
+            "current_action": s.get("CURRENT_ACTION", ""),
+            "last_growth_action": s.get("LAST_GROWTH_ACTION", ""),
+            "next_action": s.get("NEXT_ACTION", ""),
+            "next_run": s.get("NEXT_AUTONOMOUS_RUN", ""),
+            "winning_pattern": s.get("WINNING_PATTERN", ""),
+            "new_opportunities": new_opps,
+            "live_listings": live,
+            "submitted": submitted,
+            "backlinks": len(live),
+            "referral_users": (m.get("referral_users") or {}),
+            "queue": queue,
+        },
+        "agent": {
+            "users_24h": new1, "users_7d": new7, "users_30d": new30,
+            "ai_cost_24h": round(cost["d1"]["usd"] or 0, 4), "ai_cost_30d": round(cost["d30"]["usd"] or 0, 4), "ai_runs_30d": cost["d30"]["runs"],
+            "ai_cost_per_user": round((cost["d30"]["usd"] or 0) / new30, 4) if new30 else None,
+            "success_24h": ok24, "failed_24h": bad24, "success_7d": ok7, "failed_7d": bad7,
+            "budget_usd": float(s.get("AI_DAILY_BUDGET_USD", "1") or 1), "spent_today": round(spent_today, 4),
+            "email_cap": int(s.get("WBC_EMAIL_CAP", "2") or 2), "emails_today": q1("SELECT COUNT(*) n FROM email_log WHERE status='sent' AND ts>=?", (now - (now % 86400),))["n"],
+            "clean_sends": db.clean_sends(), "clean_target": int(s.get("CLEAN_SENDS_TARGET", "20") or 20), "complaints": db.complaints(),
+            "last_executor": last_exec, "last_brain": last_brain,
+        },
+        "activity": recent_activity(40),
+        "manual": manual,
+        "emails": emails,
     }

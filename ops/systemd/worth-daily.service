@@ -1,5 +1,5 @@
 [Unit]
-Description=Worth One daily report
+Description=Words Before Coffee daily growth report
 
 [Service]
 Type=oneshot
