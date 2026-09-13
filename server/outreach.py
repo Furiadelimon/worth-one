@@ -70,7 +70,7 @@ INTERNAL_PATTERNS = [
     r"\bhuman[_ ]required\b", r"\bmanual[_ ]only\b", r"\bdo[_ ]not[_ ]contact\b", r"\bwaiting[_ ]\w+[_ ]sender\b",
     r"\bAST-[A-Z0-9-]+", r"\bACT-[A-Z0-9-]+", r"\bdrop[_ ]id\b", r"\basset[_ ]id\b", r"\bDROP-0\d\d\b",
     r"\bWorth One\b", r"\bworth-one\b", r"\bfuriadelimon\b",
-    r"\bTODO\b", r"\bFIXME\b", r"\bTBD\b", r"\blorem ipsum\b", r"\bxxx+\b", r"_{3,}", r"\[[^\]]{1,40}\]", r"\{[^}]{1,40}\}", r"<[^>]{1,40}>",
+    r"(?-i:\b(TODO|FIXME|TBD)\b)", r"\blorem ipsum\b", r"\bxxx+\b", r"_{3,}", r"\[[^\]]{1,40}\]", r"\{[^}]{1,40}\}", r"<[^>]{1,40}>",
     r"\bSubject:\s", r"\bAsunto:\s",
 ]
 AGENT_PATTERNS = [
