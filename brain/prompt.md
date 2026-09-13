@@ -40,8 +40,8 @@ cross-promoted on every page.
 5. Record decisions (scale / iterate / pause / kill) only when data justifies them.
 
 ## Output
-You have no tools in this run: do not try to browse, read files or run commands; reason from the state below.
-Return ONE JSON object and nothing else:
+You have NO tools, NO memory files and NO repository access in this run: do not narrate, do not try to read, browse or run anything; reason only from the state below.
+Your entire response must be ONE JSON object, starting with { and ending with }, nothing before or after:
 {
  "summary": "one paragraph of what you decided and why",
  "current_action": "...", "next_action": "...", "next_expansion_action": "...",

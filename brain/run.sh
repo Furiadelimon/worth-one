@@ -25,6 +25,12 @@ cd "$APP"
 worthctl cmd "SET CURRENT ACTION" "Brain run $STAMP in progress" >/dev/null
 RAW=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 3 --tools "" 2>"$OUT/$STAMP.err") || true
 echo "$RAW" > "$OUT/$STAMP.raw.json"
+# retry once if the answer is not a JSON plan (the model sometimes narrates instead of answering)
+if ! printf '%s' "$RAW" | python3 -c 'import sys,json,re;d=json.load(sys.stdin);t=d.get("result") or "";m=re.search(r"\{.*\}",t,re.S);json.loads(m.group(0)) if m else sys.exit(1)' 2>/dev/null; then
+  worthctl activity brain "First attempt returned no JSON plan; retrying once" "" >/dev/null
+  RAW=$(printf '%s\n\nREMINDER: you have NO tools and NO memory files. Do not narrate, do not call tools. Your entire response must be the single JSON object, starting with { and ending with }.' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 3 --tools "" 2>>"$OUT/$STAMP.err") || true
+  echo "$RAW" > "$OUT/$STAMP.raw.json"
+fi
 python3 - "$RAW" "$STAMP" <<'PY'
 import json, sys, subprocess, re, os
 raw, stamp = sys.argv[1], sys.argv[2]

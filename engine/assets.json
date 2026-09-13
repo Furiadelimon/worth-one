@@ -102,5 +102,44 @@
     "pitch": "Subject: a 10-year subscription cost receipt your readers can build in 20 seconds\n\nHi,\n\nFor your subscription-audit piece: Subscription Lifetime Receipt lets readers tap their subscriptions and prints the 1/5/10/20-year cost as a receipt, with 'what that buys' comparisons. Free, no signup, no ads.\n\nhttps://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=blog\n\nIt is part of Worth One?, an independent experiment publishing free tools. No affiliate links.\n\nThanks,\nWorth One?",
     "notes": "Candidate list to be researched by the next brain run via search: 'subscription audit' 'cancel subscriptions' blog 2026.",
     "result": ""
+  },
+  {
+    "asset_id": "AST-PUB-003",
+    "type": "publisher",
+    "name": "Gravity blog: 'How to do a subscription audit in 30 minutes' (cancelsubscriptionsapp.com)",
+    "url": "https://cancelsubscriptionsapp.com/blog/how-to-do-a-subscription-audit",
+    "drop_id": "DROP-002",
+    "status": "prepared",
+    "why": "WHY THEM: evergreen subscription-audit guide with internal calculators, so they already link to tools. WHY THIS DROP: the Subscription Lifetime Receipt adds the 10/20-year framing their step 4 (keep/downgrade/cancel verdicts) lacks. WHY THEIR AUDIENCE CARES: people mid-audit want the decade number before deciding.",
+    "contact": "",
+    "pitch": "Subject: a 10-year receipt for your subscription-audit readers\n\nHi,\n\nYour subscription-audit guide is the clearest one I have found. One small thing it could add at the verdict step: the ten-year cost. Subscription Lifetime Receipt lets readers tap their subscriptions and prints the 1/5/10/20-year total as a receipt, with comparisons (share of a car, coffees, weeks of groceries). Free, no signup, no ads, embeddable in one line if you prefer it inline.\n\nhttps://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=gravityblog\n\nIt is part of Worth One?, an independent project publishing free tools. No affiliate links, no ask beyond 'link it if it helps'.\n\nThanks,\nWorth One?",
+    "notes": "No editorial email on the page (operated by Viral App Labs LLC). Find a contact/press address on the site before sending; otherwise skip.",
+    "result": ""
+  },
+  {
+    "asset_id": "AST-DIR-005",
+    "type": "directory",
+    "name": "yourhack.ai (300+ free no-signup web tools, curated by one indie maker)",
+    "url": "https://yourhack.ai",
+    "drop_id": "DROP-001",
+    "status": "prepared",
+    "why": "WHY THEM: single-maker curated list of free, no-ads, no-signup tools; roadmap is 'whatever people keep needing'. WHY THIS DROP: both receipts fit exactly (free, no signup, browser-only). WHY THEIR AUDIENCE CARES: visitors come looking for quick utilities and share them.",
+    "contact": "",
+    "pitch": "Two free, no-signup, no-ads browser tools for your list: Doomscroll Receipt (screen-time life calculator, prints your scrolling as a receipt) https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=yourhack and Subscription Lifetime Receipt (10/20-year cost of your subscriptions) https://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=yourhack. Both run entirely client-side; share images are drawn on the user's device.",
+    "notes": "Maker invites suggestions but lists no address in the announcement. Look for a contact/suggest link on the site; do not use community platforms (blocked).",
+    "result": ""
+  },
+  {
+    "asset_id": "AST-PUB-004",
+    "type": "publisher",
+    "name": "ID Times: 'Subscription audit: the simple system to cancel without regret'",
+    "url": "https://id-times.com/personal-finance/subscription-audit-system/",
+    "drop_id": "DROP-002",
+    "status": "prepared",
+    "why": "WHY THEM: personal-finance article about cancelling subscriptions without regret. WHY THIS DROP: the receipt makes the 'regret' maths concrete over a decade. WHY THEIR AUDIENCE CARES: readers deciding what to cut want the long-term number, not the monthly one.",
+    "contact": "",
+    "pitch": "Subject: a free 10-year subscription receipt for your cancel-without-regret piece\n\nHi,\n\nFor readers of your subscription-audit article: Subscription Lifetime Receipt prints what their subscriptions cost over 1, 5, 10 and 20 years as a receipt they can share. Free, no signup, no ads.\n\nhttps://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=idtimes\n\nPart of Worth One?, an independent project publishing free tools. No affiliate links.\n\nThanks,\nWorth One?",
+    "notes": "Find the editorial contact on the site before sending.",
+    "result": ""
   }
 ]

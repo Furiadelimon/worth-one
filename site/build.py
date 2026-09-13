@@ -219,7 +219,42 @@ def screen_page(lang, hours, slug, label):
     write(L, f"screen-time/{slug}/index.html", layout(L, f"screen-time/{slug}/", title, desc, body, 2, og_image=f"{SITE}/assets/og-doomscroll.png", ld=art(title, f"{SITE}/{'' if L == 'en' else 'es/'}screen-time/{slug}/"), drop="DROP-001"))
 
 
+AGE_ROWS = [("16-24", 3.0, "3h 00m"), ("25-34", 2.6, "2h 35m"), ("35-44", 2.2, "2h 10m"), ("45-54", 1.8, "1h 50m"), ("55-64", 1.4, "1h 25m")]
+
+
+def build_age_page(lang):
+    """Benchmark page: 'average screen time by age' (social media time per day, approximate, GWI via DataReportal)."""
+    fd = lambda d: fmt_days(d, lang)
+    if lang == "en":
+        rows = "".join(f'<tr><td>{a}</td><td>{lbl}</td><td>{fd(h*365.25/24)}</td><td>{fd(h*365.25/24*10)}</td></tr>' for a, h, lbl in AGE_ROWS)
+        title = "Average screen time by age: social media hours per day, and what they add up to"
+        desc = "Approximate daily social media time by age group (16 to 64), per year and per decade, with the world average of about 2h20. Compare yourself with a free receipt."
+        body = f"""<section class="hero"><span class="eyebrow">Benchmark</span><h1>Average screen time <em>by age</em></h1><p class="lead">How much time people spend on social media per day, by age group, and what each figure adds up to over a year and a decade. Approximate, from public surveys. Then print <a href="../../drops/doomscroll-receipt/">your own receipt</a> and see where you land.</p></section>
+<section class="card prose"><table><tr><th>Age</th><th>Per day (approx.)</th><th>Per year</th><th>10 years</th></tr>{rows}<tr><td><b>World average</b></td><td>2h 20m</td><td>{fd(2.33*365.25/24)}</td><td>{fd(2.33*365.25/24*10)}</td></tr></table>
+<h2>Where the numbers come from</h2><p>The world average (about 2 hours 20 minutes a day on social media, internet users aged 16 to 64) is from DataReportal's Digital 2025 report, built on GWI survey data. The age rows are rounded from the same family of surveys and vary by country and year by around 20 minutes either way; treat them as a ladder, not a ruler. Younger groups sit near or above three hours, and each decade of age removes roughly 20 to 30 minutes.</p>
+<h2>Why the decade column matters</h2><p>A difference of 40 minutes a day between two age groups looks small. Over ten years it is {fd(40/60*365.25/24*10)}. That is the whole point of the receipt format: the same number, framed so it can be felt.</p>
+<h2>Compare yourself</h2><p>Set your own daily figure in the <a href="../../drops/doomscroll-receipt/">Doomscroll Receipt</a>. It shows your distance from the world average and, once enough receipts exist, how you compare with everyone else who used it. Nothing you type is uploaded.</p>
+<p class="small muted">Not health advice. Time on social media is not the same as total screen time, which is typically 2 to 3 times higher.</p></section>
+<section class="card support"></section>
+{related(lang, "../../")}"""
+        write(lang, "screen-time/average-by-age/index.html", layout(lang, "screen-time/average-by-age/", title, desc, body, 2, og_image=f"{SITE}/assets/og-doomscroll.png", drop="DROP-001"))
+    else:
+        rows = "".join(f'<tr><td>{a}</td><td>{lbl}</td><td>{fd(h*365.25/24)}</td><td>{fd(h*365.25/24*10)}</td></tr>' for a, h, lbl in AGE_ROWS)
+        title = "Tiempo de pantalla medio por edad: horas de redes sociales al día y cuánto suman"
+        desc = "Tiempo diario aproximado en redes sociales por grupo de edad (16 a 64), al año y por década, con la media mundial de unas 2h20. Compárate con un ticket gratis."
+        body = f"""<section class="hero"><span class="eyebrow">Referencia</span><h1>Tiempo de pantalla medio <em>por edad</em></h1><p class="lead">Cuánto tiempo pasa la gente en redes sociales al día según su edad, y cuánto suma cada cifra en un año y en una década. Aproximado, de encuestas públicas. Luego imprime <a href="../../drops/doomscroll-receipt/">tu propio ticket</a> y mira dónde caes.</p></section>
+<section class="card prose"><table><tr><th>Edad</th><th>Al día (aprox.)</th><th>Al año</th><th>10 años</th></tr>{rows}<tr><td><b>Media mundial</b></td><td>2h 20m</td><td>{fd(2.33*365.25/24)}</td><td>{fd(2.33*365.25/24*10)}</td></tr></table>
+<h2>De dónde salen los números</h2><p>La media mundial (unas 2 horas y 20 minutos al día en redes sociales, usuarios de internet de 16 a 64 años) es del informe Digital 2025 de DataReportal, basado en encuestas de GWI. Las filas por edad están redondeadas de esa misma familia de encuestas y varían según país y año unos 20 minutos arriba o abajo; tómalas como una escalera, no como una regla. Los grupos jóvenes rondan o superan las tres horas, y cada década de edad quita entre 20 y 30 minutos.</p>
+<h2>Por qué importa la columna de la década</h2><p>Una diferencia de 40 minutos al día entre dos grupos de edad parece pequeña. En diez años son {fd(40/60*365.25/24*10)}. Ese es el sentido del formato ticket: el mismo número, enmarcado para que se sienta.</p>
+<h2>Compárate</h2><p>Pon tu cifra diaria en el <a href="../../drops/doomscroll-receipt/">Ticket de Doomscroll</a>. Muestra tu distancia a la media mundial y, cuando haya suficientes tickets, cómo te comparas con el resto de personas que lo han usado. Nada de lo que escribes se envía.</p>
+<p class="small muted">No es consejo de salud. El tiempo en redes sociales no es el tiempo total de pantalla, que suele ser 2 o 3 veces mayor.</p></section>
+<section class="card support"></section>
+{related(lang, "../../")}"""
+        write(lang, "screen-time/average-by-age/index.html", layout(lang, "screen-time/average-by-age/", title, desc, body, 2, og_image=f"{SITE}/assets/og-doomscroll.png", drop="DROP-001"))
+
+
 def build_screen(lang):
+    build_age_page(lang)
     for h, s, l, le in SCREEN:
         screen_page(lang, h, s, l if lang == "en" else le)
     fd = lambda d: fmt_days(d, lang)
