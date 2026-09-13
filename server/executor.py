@@ -21,9 +21,107 @@ import outreach
 UA = "Mozilla/5.0 (compatible; WorthOneVerifier/1.0; +https://furiadelimon.github.io/worth-one/)"
 
 # Sites with a hand-verified, selector-level recipe for unattended form submission.
-# Empty until a human (or an agent with a real browser) inspects a site once and adds a tested
-# entry here — see section 5/25 of the executor directive: code drives known flows, never guesswork.
-FORM_RECIPES = {}
+# Each entry was inspected live with Playwright (real DOM, real field names/placeholders) before
+# being added — see section 5/25 of the executor directive: code drives known flows, never guesswork.
+# A recipe never fabricates a submitter identity: if the form carries an email field and the action's
+# payload has no submitter_email, it aborts with HUMAN_REQUIRED (WAITING_*_SENDER) instead of guessing
+# or leaving a half-filled submission behind.
+
+def _has_unfillable_email(page, payload):
+    """True if the form exposes an email field we have no legitimate address to put in."""
+    if payload.get("submitter_email"):
+        return False
+    try:
+        return bool(page.evaluate("() => !!document.querySelector('input[type=email]')"))
+    except Exception:
+        return False
+
+
+def _confirmed(page):
+    body = page.inner_text("body").lower()
+    return any(w in body for w in ("thank", "submitted", "review", "received", "reached us"))
+
+
+def _recipe_theforest(page, a):
+    payload = json.loads(a.get("payload") or "{}")
+    url = payload.get("target_url")
+    if not url:
+        return "FAILED", "payload missing target_url"
+    page.goto("https://theforest.link/", timeout=25000, wait_until="domcontentloaded")
+    page.wait_for_timeout(800)
+    # the "Plant it" form lives behind a "Plant" tab (default view is the "Walk" random-discovery
+    # button); the input is present but hidden until that tab is selected.
+    page.get_by_text("Plant", exact=True).click()
+    page.wait_for_timeout(300)
+    page.fill("input[name='website']", url)
+    # the page carries several type=submit buttons (a stray "Info", the "Plant" tab itself); only
+    # "Plant it" is the real submit for the form we just filled.
+    page.get_by_role("button", name="Plant it", exact=True).click()
+    page.wait_for_timeout(3000)
+    if _confirmed(page):
+        return "SUBMITTED", "planted: " + url
+    return "FAILED", "no confirmation text after submit"
+
+
+def _recipe_nosignuptools(page, a):
+    payload = json.loads(a.get("payload") or "{}")
+    for k in ("target_url", "site_name", "short_desc", "long_desc", "category"):
+        if not payload.get(k):
+            return "FAILED", f"payload missing {k}"
+    page.goto("https://nosignuptools.com/submit", timeout=25000, wait_until="networkidle")
+    page.wait_for_timeout(1000)
+    if _has_unfillable_email(page, payload):
+        return "HUMAN_REQUIRED", "WAITING_WORTH_ONE_SENDER: this form carries a contact-email field and no Worth One sender is configured yet"
+    page.fill("#name", payload["site_name"])
+    page.fill("#url", payload["target_url"])
+    page.fill("#shortDescription", payload["short_desc"])
+    page.fill("#longDescription", payload["long_desc"])
+    if page.query_selector("select"):
+        page.select_option("select", payload["category"])
+    for tag in payload.get("tags", []):
+        btn = page.get_by_role("button", name=tag, exact=True)
+        if btn.count():
+            btn.first.click()
+    if payload.get("submitter_name"):
+        page.fill("#submitterName", payload["submitter_name"])
+    if payload.get("submitter_email"):
+        page.fill("#submitterEmail", payload["submitter_email"])
+    page.click("button[type='submit']")
+    page.wait_for_timeout(2000)
+    if _confirmed(page):
+        return "SUBMITTED", "form submitted: " + payload["site_name"]
+    return "FAILED", "no confirmation text after submit"
+
+
+def _recipe_shouldseethis(page, a):
+    payload = json.loads(a.get("payload") or "{}")
+    for k in ("target_url", "site_name", "category", "what_it_does", "why_awesome"):
+        if not payload.get(k):
+            return "FAILED", f"payload missing {k}"
+    page.goto("https://shouldseethis.com/submit/", timeout=25000, wait_until="networkidle")
+    page.wait_for_timeout(1000)
+    if _has_unfillable_email(page, payload):
+        return "HUMAN_REQUIRED", "WAITING_WORTH_ONE_SENDER: this form requires a contact email and no Worth One sender is configured yet"
+    page.get_by_placeholder("https://example.com").fill(payload["target_url"])
+    page.get_by_placeholder("What's the name of this awesome site?").fill(payload["site_name"])
+    page.get_by_role("button", name=payload["category"], exact=True).click()
+    page.get_by_placeholder("What does this website do? Keep it short and sweet!").fill(payload["what_it_does"])
+    page.get_by_placeholder("Tell us what makes this website special! What made you stop and think 'I SHOULD SEE THIS'?").fill(payload["why_awesome"])
+    page.get_by_placeholder("Your name").fill(payload.get("submitter_name") or "Worth One?")
+    if payload.get("submitter_email"):
+        page.get_by_placeholder("your@email.com").fill(payload["submitter_email"])
+    page.get_by_role("button", name="SUBMIT WEBSITE").click()
+    page.wait_for_timeout(2000)
+    if _confirmed(page):
+        return "SUBMITTED", "form submitted: " + payload["site_name"]
+    return "FAILED", "no confirmation text after submit"
+
+
+FORM_RECIPES = {
+    "theforest.link": _recipe_theforest,
+    "nosignuptools.com": _recipe_nosignuptools,
+    "shouldseethis.com": _recipe_shouldseethis,
+}
 
 # Assets/targets investigated this session that need a human for a specific, named reason.
 # Populated as the executor (or a human) discovers a hard blocker, so it is asked only once.
@@ -90,6 +188,10 @@ def classify(a):
 
     asset = db.q1("SELECT * FROM assets WHERE asset_id=?", (asset_id,)) if asset_id else None
     if asset and asset.get("contact") and "@" in asset["contact"] and asset.get("pitch"):
+        notes = asset.get("notes") or ""
+        if notes.startswith("WAITING_WORTH_ONE_SENDER") or notes.startswith("WAITING_WBC_SENDER"):
+            reason = notes.splitlines()[0]
+            return None, reason, "configure the sender described in the reason; this pitch then sends on the next cycle", 1
         return "email_outreach", None, None, None
 
     if asset and asset["type"] == "backlink" and "indexnow" in (asset["name"] or "").lower():
@@ -268,6 +370,13 @@ def run_cycle():
         extra = {}
         if status == "SUBMITTED":
             extra["next_verify_at"] = time.time() + VERIFY_SCHEDULE[0]
+        elif status == "HUMAN_REQUIRED":
+            # a handler (not classify()) decided this at execution time — carry its specific
+            # reason into the columns the Telegram batch actually reads, instead of the generic
+            # "see control center" fallback.
+            extra["human_required_reason"] = (result or "")[:200]
+            extra["human_action_text"] = (result or "")[:200]
+            extra["estimated_human_time"] = a.get("estimated_human_time") or 3
         elif status == "FAILED" and (a["attempts"] or 0) + 1 >= MAX_ATTEMPTS:
             status = "STALE"
         db.update_action(a["action_id"], status=status, result=(result or "")[:500], **extra)

@@ -21,6 +21,8 @@
   worthctl outreach-batch [n]              send up to n prepared pitches with an email contact (daily job)
   worthctl executor                        run one Action Executor cycle (discover -> auto-execute -> verify -> batch Telegram)
   worthctl queue [status]                  list the action queue, optionally filtered by status
+  worthctl ingest_targets <file.json>      load a verified distribution_targets.json into assets (idempotent)
+  worthctl queue_report                    AUTO QUEUED / WAITING HUMAN / WAITING SENDER / REJECTED-STALE counts
 """
 import json
 import os
@@ -185,6 +187,33 @@ def main(argv):
         rows = db.q("SELECT action_id,type,target,status,attempts,priority,result FROM actions" + where + " ORDER BY priority DESC", tuple(args[:1]))
         for r in rows:
             print(f"{r['action_id']:<16} {r['type']:<16} {r['status']:<15} attempts={r['attempts']} prio={r['priority']:<6} {(r['target'] or '')[:30]:<30} {(r['result'] or '')[:50]}")
+    elif cmd == "ingest_targets":
+        import ingest
+        print(json.dumps(ingest.run(args[0]), indent=1, default=str))
+    elif cmd == "queue_report":
+        rows = db.q("""SELECT a.action_id, a.status, a.type, a.target, a.human_required_reason, ast.status as asset_status
+                       FROM actions a LEFT JOIN assets ast ON ast.asset_id = a.asset_id""")
+        buckets = {"AUTO QUEUED": [], "WAITING SENDER": [], "WAITING HUMAN": [], "REJECTED / STALE": [], "LIVE / SUBMITTED": [], "OTHER": []}
+        for r in rows:
+            reason = r["human_required_reason"] or ""
+            if r["status"] in ("QUEUED", "PREPARED", "EXECUTING"):
+                buckets["AUTO QUEUED"].append(r)
+            elif r["status"] == "HUMAN_REQUIRED" and reason.startswith("WAITING_"):
+                buckets["WAITING SENDER"].append(r)
+            elif r["status"] == "HUMAN_REQUIRED":
+                buckets["WAITING HUMAN"].append(r)
+            elif r["status"] in ("STALE", "NO_RESPONSE", "FAILED"):
+                buckets["REJECTED / STALE"].append(r)
+            elif r["status"] in ("LIVE", "SUBMITTED"):
+                buckets["LIVE / SUBMITTED"].append(r)
+            else:
+                buckets["OTHER"].append(r)
+        rej_assets = db.q1("SELECT COUNT(*) n FROM assets WHERE status='rejected'")["n"]
+        for name, items in buckets.items():
+            print(f"\n{name} ({len(items)})")
+            for it in items[:60]:
+                print(f"  {it['action_id']:<16} {(it['target'] or '')[:44]:<44} {it['human_required_reason'] or ''}")
+        print(f"\nREJECTED assets (never queued): {rej_assets}")
     else:
         print(__doc__); return 1
     return 0
