@@ -146,14 +146,14 @@
     "asset_id": "AST-DIR-006",
     "type": "directory",
     "name": "tinytools.tools (605 free browser tools, free submission, no signup)",
-    "url": "https://tinytools.tools/submit",
+    "url": "https://tinytools.app/t/doomscroll-receipt-5e1bedd2",
     "drop_id": "DROP-001",
-    "status": "access_required",
+    "status": "live",
     "why": "WHY THEM: a directory whose entire premise is small free browser tools, 605 listed, no signup and no payment. WHY THIS DROP: both receipts are exactly that. WHY THEIR AUDIENCE CARES: visitors arrive looking for a tool to try right now.",
     "contact": "",
     "pitch": "Title: Doomscroll Receipt | Category: calculator / time | Description: Type how long you scroll per day and get a printed receipt: per year, per decade, and what cutting 30 minutes gives back. Free, no signup, runs entirely in your browser. URL: https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=tinytools",
-    "notes": "Submit form is a JavaScript app (paste-a-URL flow), so it cannot be posted automatically. 2-minute human task: open the URL, paste the link, title, description. Then repeat for the subscription receipt.",
-    "result": ""
+    "notes": "Doomscroll Receipt listing confirmed LIVE 2026-09-13. Subscription Lifetime Receipt (DROP-002) submission tracked separately as AST-DIR-010.",
+    "result": "LIVE 2026-09-13: Doomscroll Receipt (DROP-001) listed on tinytools."
   },
   {
     "asset_id": "AST-DIR-007",
@@ -161,11 +161,24 @@
     "name": "GitHub: rand78/awesome-free-browser-tools (PR-based list)",
     "url": "https://github.com/rand78/awesome-free-browser-tools",
     "drop_id": "DROP-001",
-    "status": "prepared",
+    "status": "access_required",
     "why": "WHY THEM: 'Found a great browser-based tool? Open a PR and add it to the list!' - free, no gatekeeper. WHY THIS DROP: browser-only, no signup, no upload. WHY THEIR AUDIENCE CARES: developers looking for client-side utilities, who also embed and share them.",
     "contact": "",
     "pitch": "PR adding two rows: | Doomscroll Receipt | Turns daily scrolling time into a printed receipt (per year, per decade, reclaimable time) | link | and | Subscription Lifetime Receipt | 1/5/10/20-year cost of your subscriptions as a receipt | link |",
-    "notes": "BLOCKED by the GitHub display name: a PR exposes the account's real name. Unblocks the moment the profile display name is neutral. Then the PR can be opened automatically.",
+    "notes": "FINAL DECISION 2026-09-13: the GitHub display name is NOT changed, the LXC stays isolated via its exclusive deploy key. A PR from a public identity is out of scope for the autonomous agent; PR content stays ready here and the owner opens it manually.",
+    "result": "HUMAN_GITHUB_ACTION_REQUIRED: PR content ready; owner must open it manually from their own GitHub account."
+  },
+  {
+    "asset_id": "AST-DIR-010",
+    "type": "directory",
+    "name": "tinytools.app/.tools submission - Subscription Lifetime Receipt (DROP-002)",
+    "url": "https://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=tinytools",
+    "drop_id": "DROP-002",
+    "status": "access_required",
+    "why": "Same free paste-a-URL directory that already listed DROP-001; DROP-002 not yet submitted.",
+    "contact": "",
+    "pitch": "Title: Subscription Lifetime Receipt | Category: calculator / money | Description: See what your subscriptions really cost over 1, 5, 10 and 20 years, printed as a receipt. Free, no signup, runs entirely in your browser. URL: https://furiadelimon.github.io/worth-one/drops/subscription-receipt/?src=tinytools",
+    "notes": "Submit form is a JavaScript app (paste-a-URL flow), so it cannot be posted automatically. 2-minute human task, same as AST-DIR-006 was for DROP-001.",
     "result": ""
   },
   {
