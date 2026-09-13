@@ -27,14 +27,15 @@
   Tests green (`.venv\Scripts\python -m pytest -q`). `deploy/remote_deploy.sh` provisions `WBC_GROWTH_TOKEN`
   and `WBC_INDEXNOW_KEY` in the LXC env automatically.
 
-## Blocked in this session (classifier) — the ONLY human steps
-1. **Deploy WBC** (Production Deploy was denied): in the WBC repo run `.\scripts\deploy.ps1 -SkipTests`
-   (tests already pass; or without the flag). Then copy the token into the engine:
-   `ssh root@192.168.1.117 grep WBC_GROWTH_TOKEN /etc/wordsbeforecoffee/wordsbeforecoffee.env` →
-   add `WBC_GROWTH_TOKEN=<value>` (and `WBC_GROWTH_URL=http://192.168.1.117/api/growth`) to `/etc/worth-one/env` on
-   LXC 140 and `systemctl restart worth-one`. Until then the Control Center shows "metrics not configured" and the
-   engine runs without product metrics (still executes/verifies/learns what it can).
-2. Optional (never blocking): MANUAL_ONLY list in the Control Center (Miniplay, CrazyGames, captcha contact forms).
+## Deployed (owner authorized the WBC deploy in a second message)
+- WBC releases 20260913-181100 and the follow-up (visits by IP host ignored) deployed with `scripts/deploy.ps1
+  -SkipTests` after 152 e2e + 20 smoke tests passed. `WBC_GROWTH_TOKEN` / `WBC_GROWTH_URL` copied into
+  `/etc/worth-one/env` on LXC 140 (never printed). Live metrics flow: 524 users/30d, 210/7d, 31/24h; games 30d:
+  words 342 users / 868 played, slide 118/190, search 51/63, memory 42/51; D1 retention 4%.
+- Smoke tests hit http://192.168.1.117 directly and were counted as 22 "direct" visitors: rows deleted, and
+  `growth.note_visit` now ignores requests whose Host is an IP. Note: smoke tests still create players/runs in the
+  production DB (pre-existing; the 2026-09-11 spike of 78 "players" is the previous deploy's tests).
+- Only optional human items remain: the MANUAL_ONLY list (Miniplay, CrazyGames, captcha contact forms).
 
 ## Verified working on the LXC (2026-09-13 15:38-15:50 UTC)
 - `worthctl freeze` archived 65 Worth One actions + 14 assets; Control Center `/admin` 200, archived `/admin/worth-one` 200.
