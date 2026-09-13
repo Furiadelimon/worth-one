@@ -431,6 +431,65 @@ def build_embed(lang):
         write(lang, "embed/index.html", layout(lang, "embed/", "Inserta una calculadora gratis en tu web · Worth One?", "Pon el Ticket de Doomscroll o el Ticket de Suscripciones en tu propia web con una línea de HTML. Gratis, sin cuenta.", body, 1))
 
 
+def build_guide(lang):
+    """Subscription-audit guide: the link target publishers can point at, and a real search-intent page."""
+    ld_faq = lambda qs: {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in qs]}
+    if lang == "en":
+        title = "How to audit your subscriptions in 20 minutes (and what they cost over 10 years)"
+        desc = "A short, honest subscription audit: find everything you pay for, see the 10-year cost, and decide what to keep. Free calculator, no signup, no app."
+        faq = ld_faq([("How often should I audit my subscriptions?", "Twice a year, and after any move, job change or new device. Most forgotten subscriptions are found within six months of starting them."),
+                      ("What is the fastest way to find hidden subscriptions?", "Search your bank and card statements for the last 12 months, then check the subscription lists inside your phone's app store and PayPal. Those three cover almost everything."),
+                      ("How much do subscriptions really cost?", "Multiply your monthly total by 120 for a decade. A typical bundle of about 68 a month is roughly 8,200 over ten years at today's prices.")])
+        body = """<section class="hero"><span class="eyebrow">Guide</span><h1>Audit your subscriptions <em>in 20 minutes.</em></h1>
+<p class="lead">No app, no account, no spreadsheet. Five steps, then one number that makes the decision for you: what each thing costs over ten years.</p>
+<div class="row"><a class="btn acc" href="../drops/subscription-receipt/" data-nav="DROP-002">Open the free calculator &rarr;</a></div></section>
+<section class="card prose">
+<h2>1. Find everything (8 minutes)</h2>
+<p>Three places cover almost every recurring charge. Your bank and card statements for the last twelve months, searched for the same amount appearing monthly. Your phone's subscription list: on iPhone, Settings &rarr; your name &rarr; Subscriptions; on Android, Play Store &rarr; Payments and subscriptions. And PayPal, under Automatic payments, which is where the forgotten ones hide.</p>
+<p>Write each one down with its price and billing date. Annual plans count: divide by twelve so everything is comparable.</p>
+<h2>2. Get the ten-year number (2 minutes)</h2>
+<p>This is the step most guides skip, and it is the one that decides things. Monthly prices are designed to feel small. Put your list into the <a href="../drops/subscription-receipt/">Subscription Lifetime Receipt</a> and it prints the yearly, five-year, ten-year and twenty-year totals as a receipt, plus what that money is in concrete things. Nothing you type is uploaded; the calculation runs in your browser.</p>
+<h2>3. Give each one a verdict (5 minutes)</h2>
+<p>Four options, not two. <b>Keep</b> if you used it in the last month and would miss it. <b>Downgrade</b> if you use it but not at the tier you pay for, which covers most music, cloud and streaming plans. <b>Switch to annual</b> only for things you are certain about, since annual saves 15 to 20 percent but locks you in. <b>Cancel</b> if you cannot remember the last time you opened it. Untick it in the calculator first and watch the ten-year line drop; that is usually enough.</p>
+<h2>4. Cancel immediately, not later (4 minutes)</h2>
+<p>"I will cancel it this weekend" is what the pricing model counts on. Cancel from the same list you used to find them. Most services keep your access until the end of the period already paid, so there is nothing to gain by waiting.</p>
+<h2>5. Put the next audit in the calendar (1 minute)</h2>
+<p>Six months from today, plus a reminder three days before any free trial ends. That single habit is worth more than the audit itself.</p>
+<h2>What this is not</h2>
+<p>Not financial advice, and not an argument that subscriptions are bad. A service you use every week may be the best money you spend. The point is to decide with the ten-year figure in view instead of the monthly one, because they are the same purchase described two different ways.</p>
+</section>
+<section class="card support"></section>
+"""
+        write(lang, "guides/subscription-audit/index.html", layout(lang, "guides/subscription-audit/", title, desc, body + related(lang, "../../"), 2, ld=faq, drop="DROP-002"))
+    else:
+        title = "Cómo auditar tus suscripciones en 20 minutos (y lo que cuestan en 10 años)"
+        desc = "Auditoría de suscripciones corta y honesta: encuentra todo lo que pagas, mira el coste a 10 años y decide qué conservar. Calculadora gratis, sin registro, sin app."
+        faq = ld_faq([("¿Cada cuánto debo revisar mis suscripciones?", "Dos veces al año, y después de una mudanza, un cambio de trabajo o un móvil nuevo. Casi todas las suscripciones olvidadas se detectan en los seis meses siguientes a contratarlas."),
+                      ("¿Cuál es la forma más rápida de encontrar suscripciones ocultas?", "Busca en los extractos del banco y la tarjeta de los últimos 12 meses, y luego revisa la lista de suscripciones de la tienda de apps del móvil y de PayPal. Esas tres fuentes cubren casi todo."),
+                      ("¿Cuánto cuestan realmente las suscripciones?", "Multiplica el total mensual por 120 para una década. Un paquete típico de unos 68 € al mes son unos 8.200 € en diez años a precios de hoy.")])
+        body = """<section class="hero"><span class="eyebrow">Guía</span><h1>Audita tus suscripciones <em>en 20 minutos.</em></h1>
+<p class="lead">Sin app, sin cuenta, sin hoja de cálculo. Cinco pasos y un número que decide por ti: lo que cuesta cada cosa en diez años.</p>
+<div class="row"><a class="btn acc" href="../drops/subscription-receipt/" data-nav="DROP-002">Abrir la calculadora gratis &rarr;</a></div></section>
+<section class="card prose">
+<h2>1. Encuéntralo todo (8 minutos)</h2>
+<p>Tres sitios cubren casi cualquier cargo recurrente. Los extractos del banco y la tarjeta de los últimos doce meses, buscando el mismo importe cada mes. La lista de suscripciones del móvil: en iPhone, Ajustes &rarr; tu nombre &rarr; Suscripciones; en Android, Play Store &rarr; Pagos y suscripciones. Y PayPal, en Pagos automáticos, que es donde se esconden las olvidadas.</p>
+<p>Apunta cada una con su precio y su fecha de cobro. Los planes anuales cuentan: divide entre doce para poder comparar.</p>
+<h2>2. Consigue el número de los diez años (2 minutos)</h2>
+<p>Es el paso que casi ninguna guía incluye y el que de verdad decide. Los precios mensuales están diseñados para parecer pequeños. Mete tu lista en el <a href="../drops/subscription-receipt/">Ticket de Suscripciones</a> y te imprime los totales al año, a cinco, a diez y a veinte años, además de qué es ese dinero en cosas concretas. Nada de lo que escribes se envía: el cálculo ocurre en tu navegador.</p>
+<h2>3. Dale un veredicto a cada una (5 minutos)</h2>
+<p>Cuatro opciones, no dos. <b>Conservar</b> si la usaste el último mes y la echarías de menos. <b>Bajar de plan</b> si la usas pero no al nivel que pagas, que es el caso de casi toda la música, la nube y el streaming. <b>Pasar a anual</b> solo con lo que tengas clarísimo, porque ahorra un 15-20 % pero te ata. <b>Dar de baja</b> si no recuerdas cuándo la abriste por última vez. Desmárcala primero en la calculadora y mira cómo cae la línea de diez años; suele bastar.</p>
+<h2>4. Cancela ahora, no luego (4 minutos)</h2>
+<p>"Lo doy de baja el fin de semana" es justo con lo que cuenta el modelo de precios. Cancela desde la misma lista que usaste para encontrarlas. Casi todos los servicios mantienen el acceso hasta el final del periodo ya pagado, así que no se gana nada esperando.</p>
+<h2>5. Pon la próxima revisión en el calendario (1 minuto)</h2>
+<p>Dentro de seis meses, más un aviso tres días antes de que acabe cualquier prueba gratuita. Ese hábito vale más que la propia auditoría.</p>
+<h2>Lo que esto no es</h2>
+<p>No es asesoramiento financiero ni un argumento contra las suscripciones. Un servicio que usas cada semana puede ser el mejor dinero que gastas. La idea es decidir con la cifra de diez años delante en vez de con la mensual, porque son la misma compra contada de dos maneras.</p>
+</section>
+<section class="card support"></section>
+"""
+        write(lang, "guides/subscription-audit/index.html", layout(lang, "guides/subscription-audit/", title, desc, body + related(lang, "../../"), 2, ld=faq, drop="DROP-002"))
+
+
 def build_sitemap():
     fixed = ["", "about.html", "drops/doomscroll-receipt/", "drops/subscription-receipt/"]
     all_urls = [f"{SITE}/{u}" for u in fixed] + [f"{SITE}/es/{u}" for u in fixed] + urls["en"] + urls["es"]
@@ -443,6 +502,6 @@ def build_sitemap():
 
 if __name__ == "__main__":
     for lang in ("en", "es"):
-        build_drops(lang); build_screen(lang); build_subs(lang); build_embed(lang)
+        build_drops(lang); build_screen(lang); build_subs(lang); build_embed(lang); build_guide(lang)
     build_notes(); build_sitemap()
     print("built")
