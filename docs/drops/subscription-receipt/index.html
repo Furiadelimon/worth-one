@@ -6,7 +6,7 @@
 <title>Subscription Lifetime Receipt · Subscription cost calculator: what they really cost over 10 years</title>
 <meta name="description" content="Free subscription cost calculator. Tap your subscriptions, get a receipt: per month, per year, 10 years, 20 years, and what that money is in real things. No sign-up.">
 <link rel="canonical" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/">
-<meta property="og:title" content="Subscription Lifetime Receipt"><meta property="og:description" content="Netflix + Spotify + gym + cloud = a used car in 10 years. Get your receipt in 20 seconds. Free."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og.png">
+<meta property="og:title" content="€14.99 a month doesn't look like much. 10 years: €1,799."><meta property="og:description" content="Tap your subscriptions, get the receipt. Free, twenty seconds, no account."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og-subscriptions.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='Arial' font-weight='bold'%3E€1%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,24 +24,26 @@
 </head>
 <body data-drop="DROP-002">
 <div class="wrap">
-<nav class="nav"><a class="brand" href="../../"><i>€1</i>WORTH ONE?</a><span class="links"><a href="../">Drops</a><a href="../../embed/">Embed</a><a href="../../about.html">About</a></span></nav>
+<nav class="nav"><a class="brand" href="../../"><i>€1</i>WORTH ONE?</a><span class="links"><a href="../">Explore</a><a href="../../about.html">About</a><a href="../../es/drops/subscription-receipt/" hreflang="es">Español</a></span></nav>
 
-<section class="hero" style="padding-bottom:8px">
-<span class="eyebrow">Drop #002 · free subscription cost calculator</span>
-<h1>Subscription <em>Lifetime</em> Receipt</h1>
-<p class="lead">Tap what you pay for. Fix the prices if yours differ. The receipt prints what it costs over ten and twenty years, and what that money is in real things.</p>
+<section class="hero" style="padding:30px 0 6px">
+<span class="eyebrow">#002 · money · free</span>
+<h1 style="font-size:clamp(34px,7.5vw,56px)">Subscription <em>Lifetime</em> Receipt</h1>
+<p class="lead">Tap what you pay for. Fix the prices if yours differ. The receipt prints what it costs over ten and twenty years.</p>
 </section>
 
-<section class="card">
+<section class="card" style="margin-top:8px">
 <div class="row" style="justify-content:space-between;margin-bottom:10px"><b>Your subscriptions (per month)</b><div class="cur"><button data-c="€" class="on">€</button><button data-c="$">$</button><button data-c="£">£</button></div></div>
 <div class="subs" id="subs"></div>
 <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addBtn">+ add your own</button></div>
 <div id="cmp" class="note" style="margin-top:12px" hidden></div>
 </section>
 
-<div class="receipt" id="rc">
+<div class="receipt money" id="rc">
  <h3>SUBSCRIPTION RECEIPT</h3>
- <div class="c">worth-one · lifetime edition · #<span id="rno">0000</span></div>
+ <div class="c">worth one? · lifetime edition · #<span id="rno">0000</span></div>
+ <hr>
+ <div class="hl"><small id="hl_top">€0 a month doesn't look like much</small><b id="hl_big">€0</b><em>over 10 years</em></div>
  <hr>
  <div id="r_items"></div>
  <hr>
@@ -67,19 +69,19 @@
 <p class="tiny muted center">The image is built on your device. Nothing you type is uploaded.</p>
 
 <section class="card">
-<h2>The cancel department</h2>
+<h2 style="font-size:clamp(22px,4vw,30px)">The cancel department</h2>
 <p>Untick one thing above and watch the 10-year line. That's the whole trick. No advice, just the number you were never shown.</p>
-<p class="small muted">Prices are typical 2026 list prices and only defaults; edit them. No inflation, no investing, no "if you had bought Bitcoin". Just what you pay.</p>
+<p class="small muted">Prices are typical 2026 list prices and only defaults; edit them. No inflation, no investing, no "if you had bought Bitcoin". Just what you pay. Want the full method? <a href="../../guides/subscription-audit/">Audit your subscriptions in 20 minutes</a>.</p>
 </section>
 
 <section class="card support"></section>
 
 <section class="card">
-<h2>Try another receipt</h2>
+<h2 style="font-size:clamp(22px,4vw,30px)">Try another one</h2>
 <div class="next">
- <a class="drop" href="../doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001</span><b>Doomscroll Receipt</b><p>How much of your life goes to scrolling, in days.</p></a>
- <a class="drop" href="../../subscriptions/" data-nav="subscriptions"><span class="num">READ</span><b>Subscriptions, one by one</b><p>What Netflix, Spotify or the gym alone cost over a decade.</p></a>
- <a class="drop" href="https://wordsbeforecoffee.com/?src=worthone" data-nav="WBC" rel="noopener"><span class="num">PLAY</span><b>Words Before Coffee</b><p>Daily word games, no registration, no ads. In Spanish.</p></a>
+ <a class="drop" href="../doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001 · TIME</span><span class="big">304 days</span><b>Doomscroll Receipt</b><p>What 2 hours a day of scrolling is over a decade.</p></a>
+ <a class="drop money" href="../../subscriptions/" data-nav="subscriptions"><span class="num">REFERENCE</span><span class="big">€1,680</span><b>Subscriptions, one by one</b><p>Netflix alone, Spotify alone, the gym alone: 10 years each.</p></a>
+ <a class="drop" href="https://wordsbeforecoffee.com/?src=worthone" data-nav="WBC" rel="noopener"><span class="num">PLAY · DAILY</span><b>Words Before Coffee</b><p>Daily word games, no registration, no ads. In Spanish.</p></a>
 </div>
 </section>
 
@@ -92,7 +94,7 @@
 <p>Include the ones you forget: cloud storage, an app you no longer open, the second streaming service, the phone insurance. Then remove one and watch the receipt reprint. Repeat until the number stops bothering you.</p>
 </section>
 
-<footer><a class="brand" href="../../">WORTH ONE?</a><br><a href="../../">Home</a><a href="../">Drops</a><a href="../../embed/">Embed this</a><a href="../../about.html">About</a><a href="../../privacy.html">Privacy</a></footer>
+<footer><a class="brand" href="../../">WORTH ONE?</a><br><a href="../../">Home</a><a href="../">Explore</a><a href="../../embed/">Embed this</a><a href="../../about.html">About</a><a href="../../privacy.html">Privacy</a></footer>
 </div>
 <canvas id="cv" width="1080" height="1350" hidden></canvas>
 <script>
@@ -109,6 +111,7 @@ let started=false,timer=null,cmpTimer=null,state={};
 function start(){if(!started){started=true;window.WO&&window.WO.send("drop_start")}}
 function render(){const on=subs.filter(s=>s.on&&s.p>0);const m=on.reduce((a,s)=>a+s.p,0),y=m*12,y10=y*10;
  $("#r_items").innerHTML=on.map(s=>`<div class="ln"><span>${s.n}</span><b>${cur}${s.p.toFixed(2)}</b></div>`).join("")||'<div class="c">nothing selected</div>';
+ $("#hl_top").textContent=cur+m.toFixed(2)+" a month doesn't look like much";$("#hl_big").textContent=fmt(y10);
  $("#r_m").textContent=fmt(m);$("#r_y").textContent=fmt(y);$("#r_5").textContent=fmt(y*5);$("#r_10").textContent=fmt(y10);$("#r_20").textContent=fmt(y*20);$("#r_tot").textContent=fmt(y10);
  const eq=[`• ${(y10/30000*100).toFixed(0)}% of the car this site wants (${cur}30,000)`,`• ${Math.round(y10/3).toLocaleString("en")} coffees at ${cur}3`,`• ${Math.round(y10/80).toLocaleString("en")} weeks of groceries at ${cur}80`,`• ${(y10/1200).toFixed(1)} return flights at ${cur}1,200`];
  $("#r_eq").innerHTML=eq.join("<br>");const tier=tiers.find(t=>m<t[0])[1];$("#r_tier").textContent=tier;$("#rno").textContent=String(Math.round(m)).padStart(4,"0");
@@ -119,14 +122,15 @@ function render(){const on=subs.filter(s=>s.on&&s.p>0);const m=on.reduce((a,s)=>
 document.querySelectorAll(".cur button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".cur button").forEach(x=>x.classList.remove("on"));b.classList.add("on");cur=b.dataset.c;draw();render()}));
 $("#addBtn").addEventListener("click",()=>{const n=prompt("Name of the subscription?");if(!n)return;const p=+prompt("Price per month?","9.99")||0;subs.push({n:n.slice(0,24),p,on:true});start();draw();render()});
 const v=new URLSearchParams(location.search).get("t");if(v&&!isNaN(+v)){$("#cmp").hidden=false;$("#cmp").innerHTML=`<b>Someone sent you their receipt:</b> they pay about <b>${cur}${Math.round(+v)}/month</b> (${cur}${Math.round(+v*120).toLocaleString("en")} over 10 years). Build yours and send it back.`}
-function card(){const c=$("#cv"),g=c.getContext("2d");g.fillStyle="#f4f1ea";g.fillRect(0,0,1080,1350);g.fillStyle="#fff";g.fillRect(90,90,900,1170);g.textAlign="center";g.fillStyle="#111";g.font='bold 50px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("SUBSCRIPTION RECEIPT",540,190);g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillStyle="#666";g.fillText("lifetime edition · worth one?",540,240);
+function card(){const c=$("#cv"),g=c.getContext("2d");const MO='"JetBrains Mono",Menlo,Consolas,monospace';g.fillStyle="#f4f1ea";g.fillRect(0,0,1080,1350);g.fillStyle="#fff";g.fillRect(90,90,900,1170);
+ g.textAlign="center";g.fillStyle="#111";g.font="bold 44px "+MO;g.fillText("SUBSCRIPTION RECEIPT",540,180);g.font="26px "+MO;g.fillStyle="#666";g.fillText("worth one? · lifetime edition",540,222);
  const line=y=>{g.strokeStyle="#999";g.setLineDash([12,10]);g.beginPath();g.moveTo(140,y);g.lineTo(940,y);g.stroke();g.setLineDash([])};
- const row=(l,r,y,big)=>{g.fillStyle="#111";g.textAlign="left";g.font=(big?"bold 44px":"32px")+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(l,150,y);g.textAlign="right";g.font=(big?"bold 44px":"bold 32px")+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(r,930,y)};
- line(280);let y=340;state.items.slice(0,7).forEach(s=>{row(s.n.slice(0,22),cur+s.p.toFixed(2),y);y+=46});if(state.items.length>7){row("+"+(state.items.length-7)+" more","",y);y+=46}
- line(y);y+=60;row("Per year",fmt(state.y),y);y+=52;row("10 years",fmt(state.y10),y);y+=52;row("20 years",fmt(state.y20),y);y+=30;line(y);y+=56;
- g.fillStyle="#333";g.textAlign="left";g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("10 years buys ≈",150,y);y+=42;state.eq.slice(0,3).forEach(e=>{g.fillText(e.slice(0,46),150,y);y+=40});line(y+8);y+=66;
- row("Your tier",state.tier.slice(0,26),y);y+=64;row("TOTAL, 10 YEARS",fmt(state.y10),y,true);
- g.fillStyle="#ff4a1c";g.textAlign="center";g.font='bold 28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("get yours: "+(window.WO_SITE||"").replace("https://","")+"/drops/subscription-receipt/",540,1220);
+ line(260);g.fillStyle="#555";g.font="32px "+MO;g.fillText(cur+state.m.toFixed(2)+" a month doesn't look like much",540,330);g.fillStyle="#178a52";g.font="bold 118px "+MO;g.fillText(fmt(state.y10),540,450);g.fillStyle="#333";g.font="32px "+MO;g.fillText("over 10 years",540,505);line(550);
+ const row=(l,r,y,big)=>{g.fillStyle="#111";g.textAlign="left";g.font=(big?"bold 40px ":"30px ")+MO;g.fillText(l,150,y);g.textAlign="right";g.font=(big?"bold 40px ":"bold 30px ")+MO;g.fillText(r,930,y);g.textAlign="center"};
+ let y=615;state.items.slice(0,6).forEach(s=>{row(s.n.slice(0,22),cur+s.p.toFixed(2),y);y+=44});if(state.items.length>6){row("+"+(state.items.length-6)+" more","",y);y+=44}
+ line(y+6);y+=56;row("Per year",fmt(state.y),y);y+=48;row("20 years",fmt(state.y20),y);y+=48;row("Your tier",state.tier.slice(0,26),y);y+=30;line(y);y+=54;
+ g.fillStyle="#333";g.textAlign="left";g.font="27px "+MO;g.fillText("10 years buys ≈",150,y);y+=40;state.eq.slice(0,3).forEach(e=>{g.fillText(e.slice(0,46),150,y);y+=38});
+ g.fillStyle="#888";g.textAlign="center";g.font="26px "+MO;g.fillText("get yours · "+(window.WO_SITE||"").replace("https://","")+"/drops/subscription-receipt/",540,1225);
  return new Promise(res=>c.toBlob(res,"image/png"))}
 async function makeFile(){const blob=await card();return new File([blob],"my-subscription-receipt.png",{type:"image/png"})}
 document.addEventListener('DOMContentLoaded',()=>{WO.mountShare($('#share'),()=>({text:"My subscriptions cost "+fmt(state.y10)+" over 10 years. What is your receipt? (free)",params:{t:Math.round(state.m)},makeFile,meta:{m:Math.round(state.m)}}))});

@@ -17,7 +17,11 @@
     "expected_value": "high shareability, low utility depth; good first traffic engine",
     "monetization_relation": "support intent shown after the receipt, once value is delivered",
     "score": 8.4,
-    "notes": "First drop. Must compete with later drops. Metrics decide: scale / iterate / pause / kill."
+    "notes": "First drop. Must compete with later drops. Metrics decide: scale / iterate / pause / kill.",
+    "category": "time",
+    "emoji": "⏳",
+    "teaser_number": "304 days",
+    "teaser_label": "2 hours a day, over 10 years"
   },
   {
     "drop_id": "DROP-002",
@@ -37,7 +41,11 @@
     "expected_value": "high utility + high shareability; strong SEO ('subscription cost calculator')",
     "monetization_relation": "money-context makes 'worth 1 EUR' natural",
     "score": 8.6,
-    "notes": "Built 2026-09-12. Reuses receipt engine from DROP-001."
+    "notes": "Built 2026-09-12. Reuses receipt engine from DROP-001.",
+    "category": "money",
+    "emoji": "💸",
+    "teaser_number": "€1,799",
+    "teaser_label": "one €14.99 subscription, over 10 years"
   },
   {
     "drop_id": "DROP-003",
@@ -57,7 +65,11 @@
     "expected_value": "very high emotional share rate; must stay non-morbid and non-medical",
     "monetization_relation": "emotional value -> support intent",
     "score": 8.1,
-    "notes": "Use public life-expectancy averages with clear disclaimer: statistics, not predictions."
+    "notes": "Use public life-expectancy averages with clear disclaimer: statistics, not predictions.",
+    "category": "time",
+    "emoji": "⏳",
+    "teaser_number": "1,560",
+    "teaser_label": "weekends left at 30, statistically"
   },
   {
     "drop_id": "DROP-004",
@@ -77,7 +89,11 @@
     "expected_value": "fun but shallow; could be a variant of DROP-001",
     "monetization_relation": "weak",
     "score": 6.2,
-    "notes": ""
+    "notes": "",
+    "category": "brain",
+    "emoji": "🧠",
+    "teaser_number": "58,400",
+    "teaser_label": "unlocks in a year at 160 a day"
   },
   {
     "drop_id": "DROP-005",
@@ -97,7 +113,11 @@
     "expected_value": "ties directly to the car fund narrative",
     "monetization_relation": "strong narrative link",
     "score": 7.0,
-    "notes": ""
+    "notes": "",
+    "category": "money",
+    "emoji": "💸",
+    "teaser_number": "€10,950",
+    "teaser_label": "a €3 coffee a day, over 10 years"
   },
   {
     "drop_id": "DROP-006",
@@ -117,6 +137,10 @@
     "expected_value": "productivity subreddit fit; risk: too close to DROP-001",
     "monetization_relation": "medium",
     "score": 6.8,
-    "notes": "Only if DROP-001 works: same audience, different angle."
+    "notes": "Only if DROP-001 works: same audience, different angle.",
+    "category": "brain",
+    "emoji": "🧠",
+    "teaser_number": "29,200",
+    "teaser_label": "notifications a year at 80 a day"
   }
 ]

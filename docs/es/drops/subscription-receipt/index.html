@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ticket de Suscripciones · Calculadora del coste de tus suscripciones en 10 años</title>
 <meta name="description" content="Calculadora gratis del coste de suscripciones. Marca las tuyas y recibe un ticket: al mes, al año, 10 años, 20 años, y qué es ese dinero en cosas reales. Sin registro.">
-<link rel="canonical" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/">
-<meta property="og:title" content="Subscription Lifetime Receipt"><meta property="og:description" content="Netflix + Spotify + gym + cloud = a used car in 10 years. Get your receipt in 20 seconds. Free."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og.png">
+<link rel="canonical" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="en" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/"><link rel="alternate" hreflang="es" href="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><link rel="alternate" hreflang="x-default" href="https://furiadelimon.github.io/worth-one/drops/subscription-receipt/">
+<meta property="og:title" content="14,99 € al mes no parece mucho. 10 años: 1.799 €."><meta property="og:description" content="Marca tus suscripciones, recibe el ticket. Gratis, veinte segundos, sin cuenta."><meta property="og:type" content="website"><meta property="og:url" content="https://furiadelimon.github.io/worth-one/es/drops/subscription-receipt/"><meta property="og:image" content="https://furiadelimon.github.io/worth-one/assets/og-es-subscriptions.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23fff' font-family='Arial' font-weight='bold'%3E€1%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,24 +24,26 @@
 </head>
 <body data-lang="es" data-drop="DROP-002">
 <div class="wrap">
-<nav class="nav"><a class="brand" href="../../"><i>€1</i>WORTH ONE?</a><span class="links"><a href="../">Drops</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../../drops/" hreflang="en">English</a></span></nav>
+<nav class="nav"><a class="brand" href="../../"><i>€1</i>WORTH ONE?</a><span class="links"><a href="../">Explorar</a><a href="../../about.html">Acerca de</a><a href="../../../drops/subscription-receipt/" hreflang="en">English</a></span></nav>
 
-<section class="hero" style="padding-bottom:8px">
-<span class="eyebrow">Drop #002 · calculadora gratis del coste de suscripciones</span>
-<h1>Ticket de <em>Suscripciones</em></h1>
-<p class="lead">Marca lo que pagas. Corrige los precios si los tuyos son otros. El ticket imprime lo que cuesta en diez y veinte años, y qué es ese dinero en cosas reales.</p>
+<section class="hero" style="padding:30px 0 6px">
+<span class="eyebrow">#002 · dinero · gratis</span>
+<h1 style="font-size:clamp(34px,7.5vw,56px)">Ticket de <em>Suscripciones</em></h1>
+<p class="lead">Marca lo que pagas. Corrige los precios si los tuyos son otros. El ticket imprime lo que cuesta en diez y veinte años.</p>
 </section>
 
-<section class="card">
+<section class="card" style="margin-top:8px">
 <div class="row" style="justify-content:space-between;margin-bottom:10px"><b>Tus suscripciones (al mes)</b><div class="cur"><button data-c="€" class="on">€</button><button data-c="$">$</button><button data-c="£">£</button></div></div>
 <div class="subs" id="subs"></div>
 <div class="row" style="margin-top:10px"><button class="btn sm ghost" id="addBtn">+ añade la tuya</button></div>
 <div id="cmp" class="note" style="margin-top:12px" hidden></div>
 </section>
 
-<div class="receipt" id="rc">
+<div class="receipt money" id="rc">
  <h3>TICKET DE SUSCRIPCIONES</h3>
- <div class="c">worth-one · edición vitalicia · #<span id="rno">0000</span></div>
+ <div class="c">worth one? · edición vitalicia · #<span id="rno">0000</span></div>
+ <hr>
+ <div class="hl"><small id="hl_top">0 € al mes no parece mucho</small><b id="hl_big">€0</b><em>en 10 años</em></div>
  <hr>
  <div id="r_items"></div>
  <hr>
@@ -67,19 +69,19 @@
 <p class="tiny muted center">La imagen se genera en tu dispositivo. Nada de lo que escribes se envía.</p>
 
 <section class="card">
-<h2>Departamento de bajas</h2>
+<h2 style="font-size:clamp(22px,4vw,30px)">Departamento de bajas</h2>
 <p>Desmarca una cosa arriba y mira la línea de 10 años. Ese es todo el truco. Sin consejos, solo el número que nunca te enseñaron.</p>
-<p class="small muted">Los precios son los de lista típicos de 2026 y solo valores por defecto; edítalos. Sin inflación, sin inversiones, sin "si hubieras comprado Bitcoin". Solo lo que pagas.</p>
+<p class="small muted">Los precios son los de lista típicos de 2026 y solo valores por defecto; edítalos. Sin inflación, sin inversiones, sin "si hubieras comprado Bitcoin". Solo lo que pagas. ¿Quieres el método completo? <a href="../../guides/subscription-audit/">Audita tus suscripciones en 20 minutos</a>.</p>
 </section>
 
 <section class="card support"></section>
 
 <section class="card">
-<h2>Prueba otro ticket</h2>
+<h2 style="font-size:clamp(22px,4vw,30px)">Prueba otra</h2>
 <div class="next">
- <a class="drop" href="../doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001</span><b>Ticket de Doomscroll</b><p>Cuánta vida se te va en el scroll, en días.</p></a>
- <a class="drop" href="../../subscriptions/" data-nav="subscriptions"><span class="num">LEER</span><b>Suscripciones, una a una</b><p>Lo que Netflix, Spotify o el gimnasio cuestan solos en una década.</p></a>
- <a class="drop" href="https://wordsbeforecoffee.com/?src=worthone" data-nav="WBC" rel="noopener"><span class="num">JUGAR</span><b>Words Before Coffee</b><p>Juegos de palabras diarios, sin registro, sin anuncios.</p></a>
+ <a class="drop" href="../doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001 · TIEMPO</span><span class="big">304 días</span><b>Ticket de Doomscroll</b><p>Lo que son 2 horas de scroll al día en una década.</p></a>
+ <a class="drop money" href="../../subscriptions/" data-nav="subscriptions"><span class="num">REFERENCIA</span><span class="big">1.680 €</span><b>Suscripciones, una a una</b><p>Netflix sola, Spotify sola, el gimnasio solo: 10 años cada una.</p></a>
+ <a class="drop" href="https://wordsbeforecoffee.com/?src=worthone" data-nav="WBC" rel="noopener"><span class="num">JUGAR · DIARIO</span><b>Words Before Coffee</b><p>Juegos de palabras diarios, sin registro, sin anuncios.</p></a>
 </div>
 </section>
 
@@ -92,7 +94,7 @@
 <p>Incluye las que olvidas: el almacenamiento en la nube, una app que ya no abres, el segundo servicio de streaming, el seguro del móvil. Luego quita una y mira cómo se reimprime el ticket. Repite hasta que el número deje de molestarte.</p>
 </section>
 
-<footer><a class="brand" href="../../">WORTH ONE?</a><br><a href="../../">Inicio</a><a href="../">Drops</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../privacy.html">Privacidad</a></footer>
+<footer><a class="brand" href="../../">WORTH ONE?</a><br><a href="../../">Inicio</a><a href="../">Explorar</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../privacy.html">Privacidad</a></footer>
 </div>
 <canvas id="cv" width="1080" height="1350" hidden></canvas>
 <script>
@@ -109,6 +111,7 @@ let started=false,timer=null,cmpTimer=null,state={};
 function start(){if(!started){started=true;window.WO&&window.WO.send("drop_start")}}
 function render(){const on=subs.filter(s=>s.on&&s.p>0);const m=on.reduce((a,s)=>a+s.p,0),y=m*12,y10=y*10;
  $("#r_items").innerHTML=on.map(s=>`<div class="ln"><span>${s.n}</span><b>${cur}${s.p.toFixed(2)}</b></div>`).join("")||'<div class="c">nada seleccionado</div>';
+ $("#hl_top").textContent=cur+m.toFixed(2)+" al mes no parece mucho";$("#hl_big").textContent=fmt(y10);
  $("#r_m").textContent=fmt(m);$("#r_y").textContent=fmt(y);$("#r_5").textContent=fmt(y*5);$("#r_10").textContent=fmt(y10);$("#r_20").textContent=fmt(y*20);$("#r_tot").textContent=fmt(y10);
  const eq=[`• ${(y10/30000*100).toFixed(0)}% del coche que quiere esta web (${cur}30.000)`,`• ${Math.round(y10/3).toLocaleString("es")} cafés a ${cur}3`,`• ${Math.round(y10/80).toLocaleString("es")} semanas de compra a ${cur}80`,`• ${(y10/1200).toFixed(1)} vuelos ida y vuelta a ${cur}1.200`];
  $("#r_eq").innerHTML=eq.join("<br>");const tier=tiers.find(t=>m<t[0])[1];$("#r_tier").textContent=tier;$("#rno").textContent=String(Math.round(m)).padStart(4,"0");
@@ -119,14 +122,15 @@ function render(){const on=subs.filter(s=>s.on&&s.p>0);const m=on.reduce((a,s)=>
 document.querySelectorAll(".cur button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".cur button").forEach(x=>x.classList.remove("on"));b.classList.add("on");cur=b.dataset.c;draw();render()}));
 $("#addBtn").addEventListener("click",()=>{const n=prompt("¿Nombre de la suscripción?");if(!n)return;const p=+prompt("¿Precio al mes?","9.99")||0;subs.push({n:n.slice(0,24),p,on:true});start();draw();render()});
 const v=new URLSearchParams(location.search).get("t");if(v&&!isNaN(+v)){$("#cmp").hidden=false;$("#cmp").innerHTML=`<b>Alguien te ha enviado su ticket:</b> paga unos <b>${cur}${Math.round(+v)}/mes</b> (${cur}${Math.round(+v*120).toLocaleString("es")} en 10 años). Haz el tuyo y devuélveselo.`}
-function card(){const c=$("#cv"),g=c.getContext("2d");g.fillStyle="#f4f1ea";g.fillRect(0,0,1080,1350);g.fillStyle="#fff";g.fillRect(90,90,900,1170);g.textAlign="center";g.fillStyle="#111";g.font='bold 50px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("TICKET DE SUSCRIPCIONES",540,190);g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillStyle="#666";g.fillText("edición vitalicia · worth one?",540,240);
+function card(){const c=$("#cv"),g=c.getContext("2d");const MO='"JetBrains Mono",Menlo,Consolas,monospace';g.fillStyle="#f4f1ea";g.fillRect(0,0,1080,1350);g.fillStyle="#fff";g.fillRect(90,90,900,1170);
+ g.textAlign="center";g.fillStyle="#111";g.font="bold 44px "+MO;g.fillText("TICKET DE SUSCRIPCIONES",540,180);g.font="26px "+MO;g.fillStyle="#666";g.fillText("worth one? · edición vitalicia",540,222);
  const line=y=>{g.strokeStyle="#999";g.setLineDash([12,10]);g.beginPath();g.moveTo(140,y);g.lineTo(940,y);g.stroke();g.setLineDash([])};
- const row=(l,r,y,big)=>{g.fillStyle="#111";g.textAlign="left";g.font=(big?"bold 44px":"32px")+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(l,150,y);g.textAlign="right";g.font=(big?"bold 44px":"bold 32px")+' "JetBrains Mono",Menlo,Consolas,monospace';g.fillText(r,930,y)};
- line(280);let y=340;state.items.slice(0,7).forEach(s=>{row(s.n.slice(0,22),cur+s.p.toFixed(2),y);y+=46});if(state.items.length>7){row("+"+(state.items.length-7)+" más","",y);y+=46}
- line(y);y+=60;row("Al año",fmt(state.y),y);y+=52;row("10 años",fmt(state.y10),y);y+=52;row("20 años",fmt(state.y20),y);y+=30;line(y);y+=56;
- g.fillStyle="#333";g.textAlign="left";g.font='28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("10 años compran ≈",150,y);y+=42;state.eq.slice(0,3).forEach(e=>{g.fillText(e.slice(0,46),150,y);y+=40});line(y+8);y+=66;
- row("Tu nivel",state.tier.slice(0,26),y);y+=64;row("TOTAL, 10 AÑOS",fmt(state.y10),y,true);
- g.fillStyle="#ff4a1c";g.textAlign="center";g.font='bold 28px "JetBrains Mono",Menlo,Consolas,monospace';g.fillText("el tuyo: "+(window.WO_SITE||"").replace("https://","")+"/es/drops/subscription-receipt/",540,1220);
+ line(260);g.fillStyle="#555";g.font="32px "+MO;g.fillText(cur+state.m.toFixed(2)+" al mes no parece mucho",540,330);g.fillStyle="#178a52";g.font="bold 118px "+MO;g.fillText(fmt(state.y10),540,450);g.fillStyle="#333";g.font="32px "+MO;g.fillText("en 10 años",540,505);line(550);
+ const row=(l,r,y,big)=>{g.fillStyle="#111";g.textAlign="left";g.font=(big?"bold 40px ":"30px ")+MO;g.fillText(l,150,y);g.textAlign="right";g.font=(big?"bold 40px ":"bold 30px ")+MO;g.fillText(r,930,y);g.textAlign="center"};
+ let y=615;state.items.slice(0,6).forEach(s=>{row(s.n.slice(0,22),cur+s.p.toFixed(2),y);y+=44});if(state.items.length>6){row("+"+(state.items.length-6)+" más","",y);y+=44}
+ line(y+6);y+=56;row("Al año",fmt(state.y),y);y+=48;row("20 años",fmt(state.y20),y);y+=48;row("Tu nivel",state.tier.slice(0,26),y);y+=30;line(y);y+=54;
+ g.fillStyle="#333";g.textAlign="left";g.font="27px "+MO;g.fillText("10 años compran ≈",150,y);y+=40;state.eq.slice(0,3).forEach(e=>{g.fillText(e.slice(0,46),150,y);y+=38});
+ g.fillStyle="#888";g.textAlign="center";g.font="26px "+MO;g.fillText("el tuyo · "+(window.WO_SITE||"").replace("https://","")+"/es/drops/subscription-receipt/",540,1225);
  return new Promise(res=>c.toBlob(res,"image/png"))}
 async function makeFile(){const blob=await card();return new File([blob],"mi-ticket-suscripciones.png",{type:"image/png"})}
 document.addEventListener('DOMContentLoaded',()=>{WO.mountShare($('#share'),()=>({text:"Mis suscripciones cuestan "+fmt(state.y10)+" en 10 años. ¿Cuál es tu ticket? (gratis)",params:{t:Math.round(state.m)},makeFile,meta:{m:Math.round(state.m)}}))});

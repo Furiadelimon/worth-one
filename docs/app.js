@@ -94,15 +94,35 @@
     }));
   }
   async function fund(el) {
-    if (!el) return;
     let s = null;
     if (API) { try { s = await (await fetch(API + "/v1/stats")).json(); } catch (e) {} }
     const f = s ? s.fund : { car_target: 30000, real: 0, real_pct: 0, people_worth_1plus: 0, intended_value: 0, payments_enabled: false };
-    el.querySelector(".bar i").style.width = Math.max(0.5, f.real_pct) + "%";
-    el.querySelector(".real").textContent = "€" + f.real.toFixed(0) + " / €" + f.car_target.toLocaleString("en");
-    el.querySelector(".people").textContent = f.people_worth_1plus.toLocaleString("en");
-    el.querySelector(".intended").textContent = "€" + f.intended_value.toLocaleString("en");
-    if (s) { const u = document.querySelector("[data-stat=users]"); if (u) u.textContent = s.users.toLocaleString("en"); const c = document.querySelector("[data-stat=countries]"); if (c) c.textContent = s.countries; }
+    if (el && el.querySelector(".bar i")) {
+      el.querySelector(".bar i").style.width = Math.max(0.5, f.real_pct) + "%";
+      const q = k => el.querySelector(k);
+      if (q(".real")) q(".real").textContent = "€" + f.real.toFixed(0) + " / €" + f.car_target.toLocaleString("en");
+      if (q(".people")) q(".people").textContent = f.people_worth_1plus.toLocaleString("en");
+      if (q(".intended")) q(".intended").textContent = "€" + f.intended_value.toLocaleString("en");
+    }
+    // v3: small honest numbers on the home "experiment" block; hidden unless real data exists
+    const st = document.getElementById("expStats");
+    if (s && st && s.users >= 5) {
+      const u = st.querySelector("[data-stat=users]"); if (u) u.textContent = s.users.toLocaleString("en");
+      const c = st.querySelector("[data-stat=countries]"); if (c) c.textContent = s.countries;
+      const r = st.querySelector("[data-stat=real]"); if (r) r.textContent = "€" + f.real.toFixed(0);
+      st.hidden = false;
+    }
+  }
+  function mountSubscribe(form) {
+    if (!form) return;
+    const msg = document.getElementById("subscribeMsg");
+    form.addEventListener("submit", async e => {
+      e.preventDefault(); const inp = form.querySelector("input"); const v = inp.value.trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast(T.bademail); return; }
+      form.querySelector("button").disabled = true;
+      if (API) { try { await fetch(API + "/v1/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sid, email: v, lang: LANG }) }); } catch (x) {} }
+      form.hidden = true; if (msg) msg.textContent = ES ? "Hecho. Solo el próximo drop, nada más." : "Done. Just the next drop, nothing else.";
+    });
   }
   async function compare(d, v) { if (!API) return null; try { return await (await fetch(API + "/v1/compare?d=" + d + "&v=" + v)).json(); } catch (e) { return null; } }
   window.WO = { sid, send, share, shareUrl, support, mountSupport, mountShare, fund, toast, compare, copy, param: k => P.get(k), site: SITE };
@@ -123,7 +143,7 @@
     } catch (e) {}
   }
   document.addEventListener("DOMContentLoaded", () => {
-    langBanner(); fund(document.querySelector(".fund")); mountSupport(document.querySelector(".support"));
+    langBanner(); fund(document.querySelector(".fund")); mountSupport(document.querySelector(".support")); mountSubscribe(document.getElementById("subscribe"));
     document.querySelectorAll("[data-share]").forEach(b => b.addEventListener("click", e => { e.preventDefault(); share({ text: b.dataset.share }); }));
     document.querySelectorAll("[data-nav]").forEach(a => a.addEventListener("click", () => send("drop_nav", { to: a.dataset.nav })));
   });

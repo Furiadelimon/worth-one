@@ -123,12 +123,34 @@ async def support(request: Request):
     if email:
         db.add_supporter(sid, email, amount, drop_id, country)
         db.record_event("ready_to_support", drop_id=drop_id, sid=sid, country=country, amount=amount)
-        n = db.q1("SELECT COUNT(*) n FROM supporters WHERE email IS NOT NULL")["n"]
+        n = db.q1("SELECT COUNT(*) n FROM supporters WHERE email IS NOT NULL AND status='intent'")["n"]
         db.add_human_action("People are ready to support: open a payment account",
                             f"{n} people left an email asking to be told when supporting is possible. "
                             "Open Stripe (or similar), then set PAYMENTS_ENABLED=true via worthctl.")
         commands.notify(f"Worth One: {n} people are READY TO SUPPORT (left email). Time to consider opening payments.")
     return {"ok": True, "payments_enabled": db.get_setting("PAYMENTS_ENABLED") == "true"}
+
+
+@app.post("/v1/subscribe")
+async def subscribe(request: Request):
+    """'If you want, I'll send the next one.' Stored with status newdrop; never counted as support intent."""
+    country, ip = _ctx(request)
+    if not _rate_ok(ip):
+        return JSONResponse({"ok": False, "rl": True}, status_code=429)
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "bad json")
+    sid = body.get("sid")
+    email = _clean(body.get("email"), 120)
+    if not sid or not SID_RE.match(sid) or not email or not EMAIL_RE.match(email):
+        raise HTTPException(400, "bad request")
+    if not db.q1("SELECT id FROM supporters WHERE email=? AND status='newdrop'", (email,)):
+        with db.tx() as c:
+            c.execute("INSERT INTO supporters(ts,sid,email,amount,drop_id,country,status) VALUES(?,?,?,?,?,?,?)",
+                      (time.time(), sid, email, 0, _clean(body.get("lang"), 5), country, "newdrop"))
+        db.record_event("click", drop_id="", sid=sid, country=country, meta={"what": "subscribe"})
+    return {"ok": True}
 
 
 @app.get("/v1/stats")
@@ -197,7 +219,8 @@ def admin_state(request: Request):
         "runs": db.q("SELECT * FROM runs ORDER BY ts DESC LIMIT 20"),
         "series": stats.daily_series(14),
         "reports": db.q("SELECT day FROM daily_reports ORDER BY day DESC LIMIT 30"),
-        "supporters": db.q("SELECT ts, amount, drop_id, country, substr(email,1,3)||'***' email FROM supporters ORDER BY ts DESC LIMIT 50"),
+        "supporters": db.q("SELECT ts, amount, drop_id, country, status, substr(email,1,3)||'***' email FROM supporters ORDER BY ts DESC LIMIT 50"),
+        "newdrop_subscribers": db.q1("SELECT COUNT(*) n FROM supporters WHERE status='newdrop'")["n"],
         "expansion": stats.expansion(),
         "scorecard": stats.scorecard(1),
         "winners": stats.winners(14)["experiments"][:15],

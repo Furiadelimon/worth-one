@@ -26,16 +26,18 @@ WBC = "https://wordsbeforecoffee.com/?src=worthone"
 urls = {"en": [], "es": []}
 
 S = {
-    "en": dict(drops="Drops", notes="Lab notes", embed="Embed", about="About", home="Home", privacy="Privacy", source="Source", other="English", other_lang="es", other_label="Español",
-               foot="An independent project by one person. Free things for strangers. One car.",
-               try_drop="Try a drop", related="Related", more="More", live="live", next="next", idea="idea",
-               wbc_num="FRIEND", wbc_tag="games", wbc_p="Three words to wake up. Daily word games, no registration, no ads. From the same kitchen (in Spanish).",
-               d1="Doomscroll Receipt", d1p="Your scrolling, itemised.", d2="Subscription Lifetime Receipt", d2p="Your subscriptions, over a decade."),
-    "es": dict(drops="Drops", notes="Notas", embed="Insertar", about="Acerca de", home="Inicio", privacy="Privacidad", source="Código", other="English", other_lang="en", other_label="English",
-               foot="Un proyecto independiente de una sola persona. Cosas gratis para desconocidos. Un coche.",
-               try_drop="Prueba un drop", related="Relacionado", more="Más", live="activo", next="próximo", idea="idea",
-               wbc_num="AMIGO", wbc_tag="juegos", wbc_p="Tres palabras para despertar. Juegos de palabras diarios, sin registro, sin anuncios. De la misma cocina.",
-               d1="Ticket de Doomscroll", d1p="Tu scroll, detallado.", d2="Ticket de Suscripciones", d2p="Tus suscripciones, en una década."),
+    "en": dict(drops="Explore", notes="Notes", embed="Embed a tool", about="About", home="Home", privacy="Privacy", source="Source", press="Press kit", other="English", other_lang="es", other_label="Español",
+               foot="Made by one person. Free things for strangers.",
+               try_drop="Try a tool", related="Try another one", more="More", live="live", next="next", idea="idea",
+               wbc_num="PLAY · DAILY", wbc_tag="games", wbc_p="Three words to wake up. Daily word games, no registration, no ads. In Spanish.",
+               d1="Doomscroll Receipt", d1p="What 2 hours a day of scrolling is over a decade.", d1n="304 days", d2="Subscription Lifetime Receipt", d2p="What one €14.99 subscription costs over 10 years.", d2n="€1,799",
+               cats={"time": "Time", "money": "Money", "brain": "Brain", "play": "Play"}, cat_sub={"time": "Your hours, printed.", "money": "Your money, over a decade.", "brain": "Small things to think with.", "play": "Daily games from the same kitchen."}),
+    "es": dict(drops="Explorar", notes="Notas", embed="Insertar", about="Acerca de", home="Inicio", privacy="Privacidad", source="Código", press="Kit de prensa", other="English", other_lang="en", other_label="English",
+               foot="Hecho por una sola persona. Cosas gratis para desconocidos.",
+               try_drop="Prueba una herramienta", related="Prueba otra", more="Más", live="activo", next="próximo", idea="idea",
+               wbc_num="JUGAR · DIARIO", wbc_tag="juegos", wbc_p="Tres palabras para despertar. Juegos de palabras diarios, sin registro, sin anuncios.",
+               d1="Ticket de Doomscroll", d1p="Lo que son 2 horas de scroll al día en una década.", d1n="304 días", d2="Ticket de Suscripciones", d2p="Lo que cuesta una suscripción de 14,99 € en 10 años.", d2n="1.799 €",
+               cats={"time": "Tiempo", "money": "Dinero", "brain": "Cabeza", "play": "Juego"}, cat_sub={"time": "Tus horas, impresas.", "money": "Tu dinero, en una década.", "brain": "Cosas pequeñas para pensar.", "play": "Juegos diarios de la misma cocina."}),
 }
 
 
@@ -75,9 +77,9 @@ def layout(lang, path, title, desc, body, depth, og_image=None, ld=None, drop=""
 </head>
 <body data-lang="{lang}" data-drop="{drop}">
 <div class="wrap">
-<nav class="nav"><a class="brand" href="{rel}"><i>€1</i>WORTH ONE?</a><span class="links"><a href="{rel}drops/">{t["drops"]}</a>{notes_link}<a href="{rel}embed/">{t["embed"]}</a><a href="{rel}about.html">{t["about"]}</a>{'<a href="' + other_href + '" hreflang="' + t["other_lang"] + '">' + t["other_label"] + '</a>' if alt else ''}</span></nav>
+<nav class="nav"><a class="brand" href="{rel}"><i>€1</i>WORTH ONE?</a><span class="links"><a href="{rel}drops/">{t["drops"]}</a><a href="{rel}about.html">{t["about"]}</a>{'<a href="' + other_href + '" hreflang="' + t["other_lang"] + '">' + t["other_label"] + '</a>' if alt else ''}</span></nav>
 {body}
-<footer><a class="brand" href="{rel}">WORTH ONE?</a><br><a href="{rel}">{t["home"]}</a><a href="{rel}drops/">{t["drops"]}</a>{notes_link}<a href="{rel}embed/">{t["embed"]}</a><a href="{rel}about.html">{t["about"]}</a><a href="{rel}privacy.html">{t["privacy"]}</a><a href="https://github.com/Furiadelimon/worth-one">{t["source"]}</a><br><span class="tiny">{t["foot"]}</span></footer>
+<footer><a class="brand" href="{rel}">WORTH ONE?</a><br><a href="{rel}">{t["home"]}</a><a href="{rel}drops/">{t["drops"]}</a>{notes_link}<a href="{rel}embed/">{t["embed"]}</a>{('<a href="' + rel + 'press/">' + t["press"] + '</a>') if lang == "en" else ''}<a href="{rel}about.html">{t["about"]}</a><a href="{rel}privacy.html">{t["privacy"]}</a><a href="https://github.com/Furiadelimon/worth-one">{t["source"]}</a><br><span class="tiny">{t["foot"]}</span></footer>
 </div>
 </body>
 </html>
@@ -109,7 +111,7 @@ def fmt_h(x):
 
 def related(lang, rel):
     t = S[lang]
-    return f"""<section class="card"><h2>{t["related"]}</h2><div class="next"><a class="drop" href="{rel}drops/doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001</span><b>{t["d1"]}</b><p>{t["d1p"]}</p></a><a class="drop" href="{rel}drops/subscription-receipt/" data-nav="DROP-002"><span class="num">#002</span><b>{t["d2"]}</b><p>{t["d2p"]}</p></a><a class="drop" href="{WBC}" data-nav="WBC" rel="noopener"><span class="num">{t["wbc_num"]}</span><b>Words Before Coffee</b><p>{t["wbc_p"]}</p></a></div></section>"""
+    return f"""<section class="card"><h2 style="font-size:clamp(22px,4vw,30px)">{t["related"]}</h2><div class="next"><a class="drop" href="{rel}drops/doomscroll-receipt/" data-nav="DROP-001"><span class="num">#001 · {t["cats"]["time"].upper()}</span><span class="big">{t["d1n"]}</span><b>{t["d1"]}</b><p>{t["d1p"]}</p></a><a class="drop money" href="{rel}drops/subscription-receipt/" data-nav="DROP-002"><span class="num">#002 · {t["cats"]["money"].upper()}</span><span class="big">{t["d2n"]}</span><b>{t["d2"]}</b><p>{t["d2p"]}</p></a><a class="drop" href="{WBC}" data-nav="WBC" rel="noopener"><span class="num">{t["wbc_num"]}</span><b>Words Before Coffee</b><p>{t["wbc_p"]}</p></a></div></section>"""
 
 
 # ---------------- drops catalogue ----------------
@@ -127,30 +129,39 @@ def build_drops(lang):
     t = S[lang]
     drops = json.load(open(os.path.join(ROOT, "engine", "drops.json"), encoding="utf-8"))
     order = {"LIVE": 0, "GROWING": 0, "VIRAL": 0, "TESTING": 1, "BUILDING": 2, "IDEA": 3, "PAUSED": 4, "KILLED": 5}
+    drops = [d for d in drops if d["status"] != "KILLED"]
     drops.sort(key=lambda d: (order.get(d["status"], 9), d["drop_id"]))
-    cards = []
+    groups = {"time": [], "money": [], "brain": [], "play": []}
+    items = []
     for d in drops:
-        if d["status"] == "KILLED":
-            continue
         name, concept = (d["name"], d["concept"]) if lang == "en" else DROP_ES.get(d["drop_id"], (d["name"], d["concept"]))
         live = d["status"] in ("LIVE", "GROWING", "VIRAL")
         num = d["drop_id"].replace("DROP-", "#")
+        cat = d.get("category", "brain")
+        big = d.get("teaser_number", "")
+        if lang == "es" and d["drop_id"] == "DROP-001": big = "304 días"
+        if lang == "es" and d["drop_id"] == "DROP-002": big = "1.799 €"
+        bigh = f'<span class="big">{esc(big)}</span>' if big else ""
         if live:
-            cards.append(f'<a class="drop" href="{d["slug"]}/" data-nav="{d["drop_id"]}"><span class="num">{num}</span><span class="tag live">{t["live"]}</span><b>{esc(name)}</b><p>{esc(concept[:140])}</p></a>')
+            groups[cat].append(f'<a class="drop {"money" if cat == "money" else ""}" href="{d["slug"]}/" data-nav="{d["drop_id"]}"><span class="num">{num} · {t["cats"][cat].upper()}</span><span class="tag live">{t["live"]}</span>{bigh}<b>{esc(name)}</b><p>{esc(concept[:120])}</p></a>')
+            items.append({"@type": "ListItem", "position": len(items) + 1, "url": f"{SITE}/{'' if lang == 'en' else 'es/'}drops/{d['slug']}/", "name": name})
         else:
             soon = d["status"] in ("BUILDING", "TESTING") or d["drop_id"] == "DROP-003"
-            cards.append(f'<div class="drop soon"><span class="num">{num}</span><span class="tag {"soon" if soon else ""}">{t["next"] if soon else t["idea"]}</span><b>{esc(name)}</b><p>{esc(concept[:140])}</p></div>')
-    cards.append(f'<a class="drop" href="{WBC}" data-nav="WBC" rel="noopener"><span class="num">{t["wbc_num"]}</span><span class="tag">{t["wbc_tag"]}</span><b>Words Before Coffee</b><p>{t["wbc_p"]}</p></a>')
+            groups[cat].append(f'<div class="drop soon"><span class="num">{num} · {t["cats"][cat].upper()}</span><span class="tag {"soon" if soon else ""}">{t["next"] if soon else t["idea"]}</span><b>{esc(name)}</b><p>{esc(concept[:120])}</p></div>')
+    groups["play"].append(f'<a class="drop" href="{WBC}" data-nav="WBC" rel="noopener"><span class="num">{t["wbc_num"]}</span><span class="tag live">{t["live"]}</span><b>Words Before Coffee</b><p>{t["wbc_p"]}</p></a>')
+    chips = "".join(f'<a class="chip" href="#{c}">{ {"time": "⏳", "money": "💸", "brain": "🧠", "play": "🎲"}[c] } {t["cats"][c]}</a>' for c in groups if groups[c])
+    sections = "".join(f'<section class="section" id="{c}"><h2>{ {"time": "⏳", "money": "💸", "brain": "🧠", "play": "🎲"}[c] } {t["cats"][c]}</h2><p class="sub">{t["cat_sub"][c]}</p><div class="drops">{"".join(groups[c])}</div></section>' for c in groups if groups[c])
+    ld = {"@context": "https://schema.org", "@type": "ItemList", "name": "Worth One? tools", "itemListElement": items}
     if lang == "en":
-        body = f"""<section class="hero"><span class="eyebrow">Catalogue</span><h1>All <em>drops</em></h1><p class="lead">Small web experiences you can use right now, free, no account. New ones appear when they are ready; the ones nobody shares are removed.</p></section>
-<div class="drops">{''.join(cards)}</div>
-<section class="card"><h2>Suggest one</h2><p>Have a small, useful, slightly absurd idea? <a href="https://github.com/Furiadelimon/worth-one/issues">Open an issue</a>. Good ideas get built and credited.</p></section>"""
-        write(lang, "drops/index.html", layout(lang, "drops/", "All drops · Worth One?", "Every free drop: doomscroll receipt, subscription lifetime receipt, and what is coming next.", body, 1))
+        body = f"""<section class="hero"><span class="eyebrow">Free · no account · no ads</span><h1>Explore <em>everything.</em></h1><p class="lead">A few now. More as they're made. Pick a mood.</p><div class="chips">{chips}</div></section>
+{sections}
+<section class="card"><h2 style="font-size:clamp(22px,4vw,30px)">Suggest one</h2><p>Have a small, useful, slightly absurd idea? <a href="https://github.com/Furiadelimon/worth-one/issues">Open an issue</a>. Good ideas get built and credited.</p></section>"""
+        write(lang, "drops/index.html", layout(lang, "drops/", "Explore · Worth One?", "Every free tool: doomscroll receipt, subscription lifetime receipt, daily word games, and what is coming next.", body, 1, ld=ld))
     else:
-        body = f"""<section class="hero"><span class="eyebrow">Catálogo</span><h1>Todos los <em>drops</em></h1><p class="lead">Pequeñas experiencias web para usar ahora mismo, gratis, sin cuenta. Los nuevos aparecen cuando están listos; los que nadie comparte se eliminan.</p></section>
-<div class="drops">{''.join(cards)}</div>
-<section class="card"><h2>Propón uno</h2><p>¿Tienes una idea pequeña, útil y un poco absurda? <a href="https://github.com/Furiadelimon/worth-one/issues">Abre un issue</a>. Las buenas ideas se construyen y se acreditan.</p></section>"""
-        write(lang, "drops/index.html", layout(lang, "drops/", "Todos los drops · Worth One?", "Todos los drops gratis: ticket de doomscroll, ticket de suscripciones y lo que viene.", body, 1))
+        body = f"""<section class="hero"><span class="eyebrow">Gratis · sin cuenta · sin anuncios</span><h1>Explora <em>todo.</em></h1><p class="lead">Unas pocas ahora. Más según se hacen. Elige un estado de ánimo.</p><div class="chips">{chips}</div></section>
+{sections}
+<section class="card"><h2 style="font-size:clamp(22px,4vw,30px)">Propón una</h2><p>¿Tienes una idea pequeña, útil y un poco absurda? <a href="https://github.com/Furiadelimon/worth-one/issues">Abre un issue</a>. Las buenas ideas se construyen y se acreditan.</p></section>"""
+        write(lang, "drops/index.html", layout(lang, "drops/", "Explorar · Worth One?", "Todas las herramientas gratis: ticket de doomscroll, ticket de suscripciones, juegos de palabras diarios y lo que viene.", body, 1, ld=ld))
 
 
 # ---------------- screen-time programmatic pages ----------------
@@ -389,7 +400,7 @@ def build_notes():
         html_body = f"""<section class="hero"><span class="eyebrow">Lab notes · {date}</span><h1>{esc(title)}</h1><p class="lead">{esc(summary)}</p></section><section class="card prose">{md(body)}</section>{related("en", "../")}"""
         write("en", f"notes/{slug}.html", layout("en", f"notes/{slug}.html", f"{title} · Worth One? lab notes", summary, html_body, 1, ld=ld, alt=False))
     items = "".join(f'<a class="drop" href="{slug}.html"><span class="num">{date}</span><b>{esc(title)}</b><p>{esc(summary)}</p></a>' for date, slug, title, summary, body in posts)
-    body = f"""<section class="hero"><span class="eyebrow">Notes</span><h1>Lab <em>notes</em></h1><p class="lead">How the tools are calculated, what the numbers say in aggregate, and milestones. Published only when there is something worth reading.</p></section><div class="drops">{items}</div>"""
+    body = f"""<section class="hero"><span class="eyebrow">Notes</span><h1>Notes from the <em>workbench.</em></h1><p class="lead">How the tools are calculated, what the numbers say in aggregate, and the occasional milestone. Short, and only when there is something to say.</p></section><div class="drops">{items}</div>"""
     write("en", "notes/index.html", layout("en", "notes/", "Lab notes · Worth One?", "Method, findings and milestones of the Worth One experiment. Published only when there is something to say.", body, 1, alt=False))
 
 
@@ -442,13 +453,13 @@ def build_guide(lang):
                       ("How much do subscriptions really cost?", "Multiply your monthly total by 120 for a decade. A typical bundle of about 68 a month is roughly 8,200 over ten years at today's prices.")])
         body = """<section class="hero"><span class="eyebrow">Guide</span><h1>Audit your subscriptions <em>in 20 minutes.</em></h1>
 <p class="lead">No app, no account, no spreadsheet. Five steps, then one number that makes the decision for you: what each thing costs over ten years.</p>
-<div class="row"><a class="btn acc" href="../drops/subscription-receipt/" data-nav="DROP-002">Open the free calculator &rarr;</a></div></section>
+<div class="row"><a class="btn acc" href="../../drops/subscription-receipt/" data-nav="DROP-002">Open the free calculator &rarr;</a></div></section>
 <section class="card prose">
 <h2>1. Find everything (8 minutes)</h2>
 <p>Three places cover almost every recurring charge. Your bank and card statements for the last twelve months, searched for the same amount appearing monthly. Your phone's subscription list: on iPhone, Settings &rarr; your name &rarr; Subscriptions; on Android, Play Store &rarr; Payments and subscriptions. And PayPal, under Automatic payments, which is where the forgotten ones hide.</p>
 <p>Write each one down with its price and billing date. Annual plans count: divide by twelve so everything is comparable.</p>
 <h2>2. Get the ten-year number (2 minutes)</h2>
-<p>This is the step most guides skip, and it is the one that decides things. Monthly prices are designed to feel small. Put your list into the <a href="../drops/subscription-receipt/">Subscription Lifetime Receipt</a> and it prints the yearly, five-year, ten-year and twenty-year totals as a receipt, plus what that money is in concrete things. Nothing you type is uploaded; the calculation runs in your browser.</p>
+<p>This is the step most guides skip, and it is the one that decides things. Monthly prices are designed to feel small. Put your list into the <a href="../../drops/subscription-receipt/">Subscription Lifetime Receipt</a> and it prints the yearly, five-year, ten-year and twenty-year totals as a receipt, plus what that money is in concrete things. Nothing you type is uploaded; the calculation runs in your browser.</p>
 <h2>3. Give each one a verdict (5 minutes)</h2>
 <p>Four options, not two. <b>Keep</b> if you used it in the last month and would miss it. <b>Downgrade</b> if you use it but not at the tier you pay for, which covers most music, cloud and streaming plans. <b>Switch to annual</b> only for things you are certain about, since annual saves 15 to 20 percent but locks you in. <b>Cancel</b> if you cannot remember the last time you opened it. Untick it in the calculator first and watch the ten-year line drop; that is usually enough.</p>
 <h2>4. Cancel immediately, not later (4 minutes)</h2>
@@ -469,13 +480,13 @@ def build_guide(lang):
                       ("¿Cuánto cuestan realmente las suscripciones?", "Multiplica el total mensual por 120 para una década. Un paquete típico de unos 68 € al mes son unos 8.200 € en diez años a precios de hoy.")])
         body = """<section class="hero"><span class="eyebrow">Guía</span><h1>Audita tus suscripciones <em>en 20 minutos.</em></h1>
 <p class="lead">Sin app, sin cuenta, sin hoja de cálculo. Cinco pasos y un número que decide por ti: lo que cuesta cada cosa en diez años.</p>
-<div class="row"><a class="btn acc" href="../drops/subscription-receipt/" data-nav="DROP-002">Abrir la calculadora gratis &rarr;</a></div></section>
+<div class="row"><a class="btn acc" href="../../drops/subscription-receipt/" data-nav="DROP-002">Abrir la calculadora gratis &rarr;</a></div></section>
 <section class="card prose">
 <h2>1. Encuéntralo todo (8 minutos)</h2>
 <p>Tres sitios cubren casi cualquier cargo recurrente. Los extractos del banco y la tarjeta de los últimos doce meses, buscando el mismo importe cada mes. La lista de suscripciones del móvil: en iPhone, Ajustes &rarr; tu nombre &rarr; Suscripciones; en Android, Play Store &rarr; Pagos y suscripciones. Y PayPal, en Pagos automáticos, que es donde se esconden las olvidadas.</p>
 <p>Apunta cada una con su precio y su fecha de cobro. Los planes anuales cuentan: divide entre doce para poder comparar.</p>
 <h2>2. Consigue el número de los diez años (2 minutos)</h2>
-<p>Es el paso que casi ninguna guía incluye y el que de verdad decide. Los precios mensuales están diseñados para parecer pequeños. Mete tu lista en el <a href="../drops/subscription-receipt/">Ticket de Suscripciones</a> y te imprime los totales al año, a cinco, a diez y a veinte años, además de qué es ese dinero en cosas concretas. Nada de lo que escribes se envía: el cálculo ocurre en tu navegador.</p>
+<p>Es el paso que casi ninguna guía incluye y el que de verdad decide. Los precios mensuales están diseñados para parecer pequeños. Mete tu lista en el <a href="../../drops/subscription-receipt/">Ticket de Suscripciones</a> y te imprime los totales al año, a cinco, a diez y a veinte años, además de qué es ese dinero en cosas concretas. Nada de lo que escribes se envía: el cálculo ocurre en tu navegador.</p>
 <h2>3. Dale un veredicto a cada una (5 minutos)</h2>
 <p>Cuatro opciones, no dos. <b>Conservar</b> si la usaste el último mes y la echarías de menos. <b>Bajar de plan</b> si la usas pero no al nivel que pagas, que es el caso de casi toda la música, la nube y el streaming. <b>Pasar a anual</b> solo con lo que tengas clarísimo, porque ahorra un 15-20 % pero te ata. <b>Dar de baja</b> si no recuerdas cuándo la abriste por última vez. Desmárcala primero en la calculadora y mira cómo cae la línea de diez años; suele bastar.</p>
 <h2>4. Cancela ahora, no luego (4 minutos)</h2>
@@ -488,6 +499,30 @@ def build_guide(lang):
 <section class="card support"></section>
 """
         write(lang, "guides/subscription-audit/index.html", layout(lang, "guides/subscription-audit/", title, desc, body + related(lang, "../../"), 2, ld=faq, drop="DROP-002"))
+
+
+def build_press():
+    """Press kit: short description, facts, and the generated visual assets. English only."""
+    assets = [("og.png", "Home card, 1200×630"), ("og-doomscroll.png", "Doomscroll Receipt card, 1200×630"), ("og-subscriptions.png", "Subscription Lifetime Receipt card, 1200×630"),
+              ("square-doomscroll.png", "Doomscroll square, 1080×1080"), ("square-subscriptions.png", "Subscriptions square, 1080×1080"),
+              ("vertical-doomscroll.png", "Doomscroll vertical, 1080×1920"), ("vertical-subscriptions.png", "Subscriptions vertical, 1080×1920")]
+    grid = "".join(f'<a class="drop" href="../assets/{f}" style="padding:12px"><img src="../assets/{f}" alt="{esc(l)}" loading="lazy" style="width:100%;border-radius:10px;display:block"><p style="margin-top:8px">{esc(l)}</p></a>' for f, l in assets)
+    body = f"""<section class="hero"><span class="eyebrow">Press kit</span><h1>Worth One? <em>in one paragraph.</em></h1>
+<p class="lead">Worth One? is a small collection of free internet tools made by one person: a receipt for your scrolling, a receipt for your subscriptions, daily word games, and more as they are made. No account, no ads, nothing uploaded. After each tool you can say whether it was worth €1; nothing is charged. Behind it is an honest, slightly odd experiment: whether enough small useful things could eventually pay for one used car.</p></section>
+<section class="card prose"><h2>Facts</h2><ul>
+<li><b>What:</b> free, single-purpose browser tools. Ten to twenty seconds each.</li>
+<li><b>Who:</b> one person, not named on purpose. No company, no investors.</li>
+<li><b>Price:</b> free. No account. No ads. No payments are open.</li>
+<li><b>Languages:</b> English and Spanish.</li>
+<li><b>Embeddable:</b> yes, one line of HTML, free. <a href="../embed/">Details</a>.</li>
+<li><b>Source:</b> <a href="https://github.com/Furiadelimon/worth-one">github.com/Furiadelimon/worth-one</a> (MIT).</li>
+<li><b>Contact:</b> hello@wordsbeforecoffee.com</li>
+</ul>
+<h2>One-liners you may use</h2>
+<ul><li>"A tiny collection of useful internet experiments."</li><li>"Your phone never sends you this receipt. This does."</li><li>"Small free things worth a minute of your time."</li></ul>
+<h2>Visual assets</h2><p>Original product graphics. Use them as they are; no logos to clear.</p></section>
+<div class="drops">{grid}</div>"""
+    write("en", "press/index.html", layout("en", "press/", "Press kit · Worth One?", "Short description, facts, one-liners and visual assets for Worth One?, a small collection of free internet tools.", body, 1, alt=False))
 
 
 def build_sitemap():
@@ -503,5 +538,5 @@ def build_sitemap():
 if __name__ == "__main__":
     for lang in ("en", "es"):
         build_drops(lang); build_screen(lang); build_subs(lang); build_embed(lang); build_guide(lang)
-    build_notes(); build_sitemap()
+    build_notes(); build_press(); build_sitemap()
     print("built")

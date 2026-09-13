@@ -39,7 +39,7 @@ def counts(days=None, drop_id=None):
             key = str(int(a)) if a in (1, 3, 5) else "other"
             intent[key] += r["n"]
             intent["value"] += a * r["n"]
-    ready = q1(f"SELECT COUNT(*) n FROM supporters WHERE ts>=? AND email IS NOT NULL AND email!=''", [_since(days) if days else 0])["n"]
+    ready = q1(f"SELECT COUNT(*) n FROM supporters WHERE ts>=? AND email IS NOT NULL AND email!='' AND status='intent'", [_since(days) if days else 0])["n"]
     return {
         "page_views": g("page_view"), "users": users, "new_users": new_users,
         "drop_starts": g("drop_start", "users"), "drop_results": results, "shares": shares, "share_events": g("share"),
