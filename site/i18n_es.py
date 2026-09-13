@@ -23,6 +23,8 @@ COMMON = [
     ('<a href="../../">Home</a><a href="../">Drops</a><a href="../../embed/">Embed this</a><a href="../../about.html">About</a><a href="../../privacy.html">Privacy</a>', '<a href="../../">Inicio</a><a href="../">Drops</a><a href="../../embed/">Insertar</a><a href="../../about.html">Acerca de</a><a href="../../privacy.html">Privacidad</a>'),
     ('<a href="./">Home</a><a href="drops/">Drops</a><a href="about.html">About</a></footer>', '<a href="./">Inicio</a><a href="drops/">Drops</a><a href="about.html">Acerca de</a></footer>'),
     ('Try another receipt', 'Prueba otro ticket'),
+    ('Send it to the friend who says they barely use their phone', 'Envíaselo al amigo que dice que casi no usa el móvil'),
+    ('Send it to whoever shares your subscriptions', 'Envíaselo a quien comparta tus suscripciones'),
     ('<span class="num">FRIEND</span><span class="tag">games</span><b>Words Before Coffee</b><p>Three words to wake up. Daily word games, no registration, no ads. From the same kitchen (in Spanish).</p>', '<span class="num">AMIGO</span><span class="tag">juegos</span><b>Words Before Coffee</b><p>Tres palabras para despertar. Juegos de palabras diarios, sin registro, sin anuncios. De la misma cocina.</p>'),
     ('<span class="num">PLAY</span><b>Words Before Coffee</b><p>Daily word games, no registration, no ads. In Spanish.</p>', '<span class="num">JUGAR</span><b>Words Before Coffee</b><p>Juegos de palabras diarios, sin registro, sin anuncios.</p>'),
     ('The image is built on your phone. Nothing you type is uploaded.', 'La imagen se genera en tu móvil. Nada de lo que escribes se envía.'),
