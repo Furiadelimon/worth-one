@@ -22,6 +22,7 @@
   worthctl executor                        run one Action Executor cycle (discover -> auto-execute -> verify -> batch Telegram)
   worthctl queue [status]                  list the action queue, optionally filtered by status
   worthctl ingest_targets <file.json>      load a verified distribution_targets.json into assets (idempotent)
+  worthctl ingest_wbc <file.json>          load wbc_distribution_targets.json into assets, tagged drop_id=WBC
   worthctl queue_report                    AUTO QUEUED / WAITING HUMAN / WAITING SENDER / REJECTED-STALE counts
 """
 import json
@@ -190,6 +191,9 @@ def main(argv):
     elif cmd == "ingest_targets":
         import ingest
         print(json.dumps(ingest.run(args[0]), indent=1, default=str))
+    elif cmd == "ingest_wbc":
+        import ingest
+        print(json.dumps(ingest.run_wbc(args[0]), indent=1, default=str))
     elif cmd == "queue_report":
         rows = db.q("""SELECT a.action_id, a.status, a.type, a.target, a.human_required_reason, ast.status as asset_status
                        FROM actions a LEFT JOIN assets ast ON ast.asset_id = a.asset_id""")

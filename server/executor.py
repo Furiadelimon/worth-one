@@ -135,6 +135,22 @@ KNOWN_HUMAN_ONLY = {
 VERIFY_SCHEDULE = [86400, 3 * 86400, 7 * 86400]  # 24h, 72h, 7d after SUBMITTED
 MAX_ATTEMPTS = 3
 
+# Owner directive 2026-09-13: hello@wordsbeforecoffee.com is now authorized for both Worth One and
+# Words Before Coffee outreach, but "start conservatively, max 5-10/day per project, do not mass-send".
+# Enforced here (not in outreach.py) so both the CLI batch path and this automatic cycle share one limit.
+DAILY_EMAIL_CAP = 5
+
+
+def _brand_of(drop_id):
+    return "wbc" if drop_id == "WBC" else "worth_one"
+
+
+def _emails_sent_today(brand):
+    start = time.time() - (time.time() % 86400)
+    cond = "drop_id='WBC'" if brand == "wbc" else "(drop_id IS NULL OR drop_id!='WBC')"
+    row = db.q1(f"SELECT COUNT(*) n FROM assets WHERE submitted_ts>=? AND {cond}", (start,))
+    return row["n"] if row else 0
+
 
 def _host(url):
     m = re.match(r"https?://([^/]+)", url or "")
@@ -188,10 +204,11 @@ def classify(a):
 
     asset = db.q1("SELECT * FROM assets WHERE asset_id=?", (asset_id,)) if asset_id else None
     if asset and asset.get("contact") and "@" in asset["contact"] and asset.get("pitch"):
-        notes = asset.get("notes") or ""
-        if notes.startswith("WAITING_WORTH_ONE_SENDER") or notes.startswith("WAITING_WBC_SENDER"):
-            reason = notes.splitlines()[0]
-            return None, reason, "configure the sender described in the reason; this pitch then sends on the next cycle", 1
+        # DAILY_EMAIL_CAP is enforced live in run_cycle()'s execution loop, not here: classify()
+        # runs once for the whole queue *before* any of this cycle's sends happen, so a check
+        # against historical submitted_ts here would see the same (stale) count for every action
+        # and cap nothing within a single cycle — exactly the bug that let 53 emails go out in one
+        # batch on 2026-09-13. Do not reintroduce a per-item cap check in this function.
         return "email_outreach", None, None, None
 
     if asset and asset["type"] == "backlink" and "indexnow" in (asset["name"] or "").lower():
@@ -360,13 +377,24 @@ def run_cycle():
             newly_human += 1
 
     auto.sort(key=lambda a: -(a.get("priority") or 0))
-    executed = {}
+    executed, rate_limited = {}, 0
+    # live per-brand counter, seeded from what's already gone out today (not just this cycle) —
+    # this is the actual enforcement point for DAILY_EMAIL_CAP, checked before each send as it
+    # happens, not once for the whole batch up front (see the note in classify()).
+    email_sent_this_cycle = {"worth_one": _emails_sent_today("worth_one"), "wbc": _emails_sent_today("wbc")}
     for a in auto:
+        if a["type"] == "email_outreach":
+            brand = _brand_of(db.q1("SELECT drop_id FROM assets WHERE asset_id=?", (a["asset_id"],))["drop_id"])
+            if email_sent_this_cycle[brand] >= DAILY_EMAIL_CAP:
+                rate_limited += 1
+                continue  # leave QUEUED; retried next cycle once under the cap (today or tomorrow)
         db.update_action(a["action_id"], status="EXECUTING", attempts=(a["attempts"] or 0) + 1, last_attempt=time.time())
         try:
             status, result = HANDLERS[a["type"]](a)
         except Exception as e:
             status, result = "FAILED", str(e)[:300]
+        if a["type"] == "email_outreach" and status == "SUBMITTED":
+            email_sent_this_cycle[brand] += 1
         extra = {}
         if status == "SUBMITTED":
             extra["next_verify_at"] = time.time() + VERIFY_SCHEDULE[0]
@@ -401,10 +429,10 @@ def run_cycle():
                 db.update_action(a["action_id"], telegram_notified_ts=now)
             db.log_telegram_batch(len(to_notify), sum((a.get("estimated_human_time") or 3) for a in to_notify), [a["action_id"] for a in to_notify])
 
-    summary = f"discovered={discovered} executed={executed} verified={verified} human_pending={len(pending_human)} telegram_sent={telegram_sent}"
+    summary = f"discovered={discovered} executed={executed} verified={verified} human_pending={len(pending_human)} rate_limited={rate_limited} telegram_sent={telegram_sent}"
     db.record_run("executor", "ok", summary)
     return {
         "discovered": discovered, "executed": executed, "verified": verified,
-        "newly_human": newly_human, "human_pending": len(pending_human), "telegram_sent": telegram_sent,
-        "summary": summary,
+        "newly_human": newly_human, "human_pending": len(pending_human), "rate_limited": rate_limited,
+        "telegram_sent": telegram_sent, "summary": summary,
     }

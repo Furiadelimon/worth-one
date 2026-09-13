@@ -229,6 +229,92 @@ def attach_recipe_payloads():
     return attached
 
 
+WBC_BASE = "https://wordsbeforecoffee.com"
+
+_WBC_PRESS_ES = (
+    "Hola,\n\n{why}\n\n{angle}\n\nSi encaja, aquí está: {link}\n\nUn saludo, gracias por leer.\nWords Before Coffee"
+)
+_WBC_TEACHER_EN = (
+    "Hi,\n\n{why}\n\n{angle} Same puzzle for the whole class, no student accounts, resets at midnight.\n\n{link}\n\nHappy to answer anything.\nWords Before Coffee"
+)
+_WBC_SUBJECT_ES = "Cuatro juegos diarios en español -- {name}"
+_WBC_SUBJECT_EN = "A free daily Spanish word game for class -- {name}"
+
+
+def build_wbc_pitch(row):
+    lang = row.get("language") or "en"
+    link = f"{WBC_BASE}/?src={_slug(row['name'])}"
+    why = (row.get("why_fit") or "").strip()
+    angle = (row.get("pitch_angle") or "").strip()
+    if lang == "es":
+        return _WBC_SUBJECT_ES.format(name=row["name"]) + "\n" + _WBC_PRESS_ES.format(why=why, angle=angle, link=link)
+    return _WBC_SUBJECT_EN.format(name=row["name"]) + "\n" + _WBC_TEACHER_EN.format(why=why, angle=angle, link=link)
+
+
+def transform_wbc(row, counters, idx):
+    """Same shape as transform(), but for Words Before Coffee: drop_id is always the literal 'WBC'
+    tag (so executor.classify()/outreach.py read it as the wbc brand), pitches are WBC's own honest
+    voice (no Worth One framing), and there is no sender-block marker — the sender is authorized."""
+    name, url = row["name"], row.get("relevant_page") or row.get("submission_url") or row.get("url")
+    key = _norm(name)
+    ukey = "url:" + _urlkey(row.get("submission_url") or row.get("url") or "")
+    if key in idx or (ukey != "url:" and ukey in idx):
+        return None, f"already tracked as {idx.get(key) or idx.get(ukey)}"
+    if row.get("tier") == "REJECT":
+        return None, "rejected in research, not ingested"
+    method = row.get("method") or "none"
+    tier = row.get("tier")
+    if tier == "C" and not row.get("contact") and not row.get("submission_url"):
+        return None, "tier C, no verified route — kept as a lead only"
+
+    asset_id = _next_id("WBC-" + re.sub(r"[^A-Za-z0-9]", "", row.get("campaign_cluster") or "MISC")[:6], counters)
+    d = {"asset_id": asset_id, "type": row.get("type") or "directory", "name": name,
+         "url": row.get("submission_url") or url, "drop_id": "WBC",
+         "why": (row.get("why_fit") or "")[:500], "pitch": None, "contact": None,
+         "submitted_ts": None, "result": None, "notes": None}
+
+    if method == "email" and row.get("contact"):
+        d["status"] = "prepared"
+        d["contact"] = row["contact"]
+        d["pitch"] = build_wbc_pitch(row)
+        d["url"] = url
+        d["notes"] = (row.get("pitch_angle") or "")[:300]
+    elif method in ("form_submit", "contact_form"):
+        d["status"] = "prepared"
+        if row.get("login_required") or row.get("captcha"):
+            d["notes"] = (f"login required, " if row.get("login_required") else "") + \
+                         (f"captcha present, " if row.get("captcha") else "") + \
+                         f"open {d['url']} and submit by hand: {(row.get('pitch_angle') or '')[:200]}"
+        else:
+            d["notes"] = f"no tested form recipe yet — open {d['url']} and submit by hand: {(row.get('pitch_angle') or '')[:200]}"
+    elif method in ("login_form", "github_pr"):
+        d["status"] = "access_required"
+        d["notes"] = f"requires creating an account at {d['url']}. " + (row.get("pitch_angle") or "")[:200]
+    else:
+        return None, f"no automatable or human route recorded (method={method})"
+
+    return d, None
+
+
+def run_wbc(path):
+    rows = json.load(open(path, encoding="utf-8"))["targets"]
+    idx = _existing_index()
+    counters = _seed_counters()
+    created, skipped = 0, {}
+    for row in rows:
+        d, skip_reason = transform_wbc(row, counters, idx)
+        if d is None:
+            skipped[skip_reason] = skipped.get(skip_reason, 0) + 1
+            continue
+        db.upsert_asset(d)
+        idx[_norm(d["name"])] = d["asset_id"]
+        uk = _urlkey(d["url"])
+        if uk:
+            idx["url:" + uk] = d["asset_id"]
+        created += 1
+    return {"created": created, "skipped": skipped, "total_rows": len(rows)}
+
+
 def run(path):
     rows = json.load(open(path, encoding="utf-8"))["targets"]
     idx = _existing_index()
