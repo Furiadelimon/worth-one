@@ -41,7 +41,7 @@ def receipt_card(size, title, small, big, em, rows, color, foot, tilt=True):
     im = Image.new("RGB", size, BG)
     d = ImageDraw.Draw(im)
     # receipt geometry
-    rw = int(min(W * 0.62, 640)) if W >= H else int(W * 0.78)
+    rw = int(min(W * 0.62, H * 0.78)) if W >= H else int(W * 0.78)   # landscape: bound by height so the receipt never overflows
     rh = int(H * 0.86)
     x0 = (W - rw) // 2
     y0 = (H - rh) // 2
