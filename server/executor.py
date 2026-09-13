@@ -209,6 +209,13 @@ def _should_notify(a):
 
 def _format_telegram(human, executed, verified):
     total_min = sum((a.get("estimated_human_time") or 3) for a in human)
+    ranked = sorted(human, key=lambda x: -(x.get("priority") or 0))
+    n = len(ranked)
+    # relative thirds, not fixed score thresholds: the label should stay meaningful as the
+    # scoring defaults evolve, instead of every item landing in the same bucket.
+    labels = {}
+    for i, a in enumerate(ranked):
+        labels[a["action_id"]] = "HIGH" if i < max(1, n // 3) else "LOW" if i >= n - max(1, n // 3) else "MEDIUM"
     lines = ["WORTH ONE - HUMAN ACTIONS", "", "Automatic work completed:"]
     lines.append(f"- {executed.get('SUBMITTED', 0) + executed.get('LIVE', 0)} actions executed")
     lines.append(f"- {executed.get('SUBMITTED', 0)} submissions sent")
@@ -218,8 +225,8 @@ def _format_telegram(human, executed, verified):
     lines.append("")
     lines.append(f"Human actions pending: {len(human)}")
     lines.append("")
-    for i, a in enumerate(sorted(human, key=lambda x: -(x.get("priority") or 0)), 1):
-        pr = "HIGH" if (a.get("priority") or 0) >= 3 else "MEDIUM" if (a.get("priority") or 0) >= 1 else "LOW"
+    for i, a in enumerate(ranked, 1):
+        pr = labels[a["action_id"]]
         lines.append(f"{i}. [{pr}] {a.get('target') or a['action_id']}")
         lines.append(f"   Action: {a.get('human_action_text') or a.get('human_required_reason') or 'see control center'}")
         if a.get("url"):
