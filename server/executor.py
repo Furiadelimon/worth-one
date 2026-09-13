@@ -189,7 +189,8 @@ def _reachable(url):
         title = re.search(r"<title[^>]*>(.*?)</title>", body, re.S | re.I)
         data = {"http": code, "title": (title.group(1).strip()[:120] if title else "")}
     except urllib.error.HTTPError as e:
-        ok, data = False, {"http": e.code}
+        # a redirect that urllib refused to follow (scheme/host change, loop) still proves the site is there
+        ok, data = (300 <= e.code < 400), {"http": e.code, "location": (e.headers.get("Location") or "")[:120]}
     except Exception as e:  # noqa: BLE001
         ok, data = False, {"error": str(e)[:120]}
     db.cache_set(key, "ok" if ok else "unreachable", data)

@@ -36,6 +36,18 @@
    engine runs without product metrics (still executes/verifies/learns what it can).
 2. Optional (never blocking): MANUAL_ONLY list in the Control Center (Miniplay, CrazyGames, captcha contact forms).
 
+## Verified working on the LXC (2026-09-13 15:38-15:50 UTC)
+- `worthctl freeze` archived 65 Worth One actions + 14 assets; Control Center `/admin` 200, archived `/admin/worth-one` 200.
+- Executor cycle: The Forest planted, SHOULDSEETHIS (FUN) submitted (both via Playwright recipes); Alldle + The Dles
+  recorded as submitted (done by hand in the morning); 3 verified pitches QUEUED (todoELE ES, LikeWordle EN, Weird
+  Web Tools EN) - all 8 checks PASS on the LXC - held by the daily cap (15 old-pipeline sends count for today);
+  21 targets MANUAL_ONLY; playlin.io unreachable (lead).
+- Brain run (Sonnet, $0.14): returned valid JSON, 4 leads (ProfeDeELE, Try Hard Guides, 65 Y Más, PuzzleNation Blog),
+  2 SEO page ideas (`/juego-de-palabras-diario`, `/daily-spanish-word-game`) in engine/wbc/seo-ideas.md; executor
+  verifies leads right after (research cache). Daily AI spend $0.45 of the $1.00 budget.
+- Bug fixed on the way: `last_attempt` was never stored (agent counters read 0); AI-prohibition regex matched a
+  directory's "AI Tools" category; `_reachable` treats 3xx as reachable.
+
 ## Facts to remember
 - 15 WBC emails + 38 Worth One emails went out on 2026-09-13 09:50 through the OLD pipeline; the WBC ones carried
   research notes as body text. Those addresses are burned (NO_DUPLICATE) and count as 0 clean sends. Shared

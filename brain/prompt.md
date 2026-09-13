@@ -27,6 +27,9 @@ source, countries, retention, what is live, what produced players). Read it. The
    Colombia, Chile, USA, UK, then others; plus people learning Spanish.
 4. Do not repeat anything in `already_known_hosts` (every host ever investigated, contacted, rejected or listed).
    Do not propose random discovery: every lead must name the specific page and why its readers would play.
+5. `needs_pitch` lists verified targets (public email confirmed, no prohibitions) that only lack a message: for each
+   one, re-emit the lead with the SAME asset_id, the same url/contact/contact_source and a finished pitch. This is
+   the cheapest source of players you have; do it before proposing new leads.
 
 ## WHAT YOU CAN AND CANNOT DO
 - You have NO tools and NO browsing. Propose leads from what you know; the executor verifies each one
