@@ -146,14 +146,14 @@
     "asset_id": "AST-DIR-006",
     "type": "directory",
     "name": "tinytools.tools (605 free browser tools, free submission, no signup)",
-    "url": "https://tinytools.app/t/doomscroll-receipt-5e1bedd2",
+    "url": "https://tinytools.tools/t/doomscroll-receipt-5e1bedd2",
     "drop_id": "DROP-001",
     "status": "live",
     "why": "WHY THEM: a directory whose entire premise is small free browser tools, 605 listed, no signup and no payment. WHY THIS DROP: both receipts are exactly that. WHY THEIR AUDIENCE CARES: visitors arrive looking for a tool to try right now.",
     "contact": "",
     "pitch": "Title: Doomscroll Receipt | Category: calculator / time | Description: Type how long you scroll per day and get a printed receipt: per year, per decade, and what cutting 30 minutes gives back. Free, no signup, runs entirely in your browser. URL: https://furiadelimon.github.io/worth-one/drops/doomscroll-receipt/?src=tinytools",
-    "notes": "Doomscroll Receipt listing confirmed LIVE 2026-09-13. Subscription Lifetime Receipt (DROP-002) submission tracked separately as AST-DIR-010.",
-    "result": "LIVE 2026-09-13: Doomscroll Receipt (DROP-001) listed on tinytools."
+    "notes": "Doomscroll Receipt listing confirmed LIVE 2026-09-13 at tinytools.tools/t/doomscroll-receipt-5e1bedd2 (verified by HTTP GET, HTTP 200, correct page title). The tinytools.app domain returns 503 with a broken self-signed cert - do not use it, it is not the working host. Subscription Lifetime Receipt (DROP-002) submission tracked separately as AST-DIR-010.",
+    "result": "LIVE 2026-09-13: Doomscroll Receipt (DROP-001) listed on tinytools.tools."
   },
   {
     "asset_id": "AST-DIR-007",

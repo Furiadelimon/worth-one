@@ -78,6 +78,24 @@ CREATE TABLE IF NOT EXISTS assets (
   type TEXT, name TEXT, url TEXT, drop_id TEXT, status TEXT, why TEXT, pitch TEXT, contact TEXT,
   submitted_ts REAL, result TEXT, notes TEXT, created_ts REAL, updated_ts REAL
 );
+
+CREATE TABLE IF NOT EXISTS actions (
+  action_id TEXT PRIMARY KEY,
+  asset_id TEXT, type TEXT NOT NULL, target TEXT, url TEXT, drop_id TEXT, campaign_id TEXT,
+  expected_users REAL DEFAULT 0, confidence REAL DEFAULT 0.5, strategic_value REAL DEFAULT 0.5, effort REAL DEFAULT 1,
+  priority REAL DEFAULT 0,
+  status TEXT DEFAULT 'PREPARED',
+  attempts INTEGER DEFAULT 0,
+  created_at REAL, last_attempt REAL, updated_ts REAL,
+  result TEXT, human_required_reason TEXT, human_action_text TEXT, estimated_human_time INTEGER,
+  payload TEXT, next_verify_at REAL, telegram_notified_ts REAL
+);
+CREATE INDEX IF NOT EXISTS ix_actions_status ON actions(status);
+CREATE INDEX IF NOT EXISTS ix_actions_asset ON actions(asset_id);
+
+CREATE TABLE IF NOT EXISTS telegram_log (
+  id INTEGER PRIMARY KEY, ts REAL, human_actions_count INTEGER, estimated_minutes REAL, actions TEXT, resolved_at REAL
+);
 """
 
 DEFAULT_SETTINGS = {
@@ -262,3 +280,38 @@ def upsert_asset(d):
             c.execute("UPDATE assets SET " + sets + ", updated_ts=? WHERE asset_id=?", vals[1:] + [time.time(), d["asset_id"]])
         else:
             c.execute("INSERT INTO assets(" + ",".join(cols) + ",created_ts,updated_ts) VALUES(" + marks + ",?,?)", vals + [time.time(), time.time()])
+
+
+ACTION_COLS = ["action_id", "asset_id", "type", "target", "url", "drop_id", "campaign_id",
+               "expected_users", "confidence", "strategic_value", "effort", "priority",
+               "status", "attempts", "result", "human_required_reason", "human_action_text",
+               "estimated_human_time", "payload", "next_verify_at", "telegram_notified_ts"]
+
+
+def add_action(action_id, type_, **fields):
+    """Create an action if it doesn't already exist (idempotent DISCOVER->PREPARE step). Returns True if created."""
+    with tx() as c:
+        if c.execute("SELECT 1 FROM actions WHERE action_id=?", (action_id,)).fetchone():
+            return False
+        cols = ["action_id", "type"] + [k for k in fields if k in ACTION_COLS]
+        vals = [action_id, type_] + [fields[k] for k in cols[2:]]
+        c.execute(
+            "INSERT INTO actions(" + ",".join(cols) + ",created_at,updated_ts) VALUES(" + ",".join(["?"] * len(cols)) + ",?,?)",
+            vals + [time.time(), time.time()],
+        )
+        return True
+
+
+def update_action(action_id, **fields):
+    fields = {k: v for k, v in fields.items() if k in ACTION_COLS}
+    if not fields:
+        return
+    sets = ",".join(k + "=?" for k in fields)
+    with tx() as c:
+        c.execute("UPDATE actions SET " + sets + ", updated_ts=? WHERE action_id=?", list(fields.values()) + [time.time(), action_id])
+
+
+def log_telegram_batch(human_actions_count, estimated_minutes, action_ids):
+    with tx() as c:
+        c.execute("INSERT INTO telegram_log(ts,human_actions_count,estimated_minutes,actions) VALUES(?,?,?,?)",
+                  (time.time(), human_actions_count, estimated_minutes, json.dumps(action_ids)))

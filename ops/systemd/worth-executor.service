@@ -1,0 +1,9 @@
+[Unit]
+Description=Worth One Action Executor (discover -> auto-execute -> verify -> batch Telegram)
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/worth-one/env
+WorkingDirectory=/opt/worth-one
+ExecStart=/opt/worth-one/.venv/bin/python /opt/worth-one/server/worthctl.py executor
+TimeoutStartSec=600

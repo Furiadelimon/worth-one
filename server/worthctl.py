@@ -19,6 +19,8 @@
   worthctl assets [type]                   list expansion assets
   worthctl outreach <asset_id> [--dry]     send the recorded pitch by email (needs project mailbox in env)
   worthctl outreach-batch [n]              send up to n prepared pitches with an email contact (daily job)
+  worthctl executor                        run one Action Executor cycle (discover -> auto-execute -> verify -> batch Telegram)
+  worthctl queue [status]                  list the action queue, optionally filtered by status
 """
 import json
 import os
@@ -83,6 +85,7 @@ def state(compact=False):
             "open_human_actions": db.q("SELECT id,title FROM human_actions WHERE status='open'"),
             "recent_actions": db.q("SELECT channel,substr(message,1,90) message FROM activity WHERE actor='agent' ORDER BY ts DESC LIMIT 15"),
             "tiktok_campaigns": db.q("SELECT campaign_id,drop_id,status,impressions,visitors FROM campaigns WHERE platform='tiktok'"),
+            "action_queue": db.q("SELECT status, COUNT(*) n FROM actions GROUP BY status"),
         }
         print(json.dumps(out, indent=1, default=str)); return
     out = {
@@ -102,6 +105,10 @@ def state(compact=False):
         "ai_cost_30d": stats.ai_cost(30),
         "expansion": stats.expansion(),
         "assets": db.q("SELECT asset_id,type,name,url,drop_id,status,result FROM assets ORDER BY updated_ts DESC LIMIT 80"),
+        "action_queue": db.q("SELECT status, COUNT(*) n FROM actions GROUP BY status"),
+        "actions": db.q("SELECT action_id,type,target,status,attempts,priority,result FROM actions ORDER BY updated_ts DESC LIMIT 80"),
+        "last_executor_run": db.q1("SELECT ts,status,summary FROM runs WHERE kind='executor' ORDER BY ts DESC LIMIT 1"),
+        "last_telegram_batch": db.q1("SELECT ts,human_actions_count,estimated_minutes FROM telegram_log ORDER BY ts DESC LIMIT 1"),
     }
     print(json.dumps(out, indent=1, default=str))
 
@@ -170,6 +177,14 @@ def main(argv):
         print("\n".join(outreach.batch(int(args[0]) if args else 3, dry_run="--dry" in args)))
     elif cmd == "notify":
         print("sent" if commands.notify(args[0]) else "not configured / failed")
+    elif cmd == "executor":
+        import executor
+        print(json.dumps(executor.run_cycle(), indent=1, default=str))
+    elif cmd == "queue":
+        where = " WHERE status=?" if args else ""
+        rows = db.q("SELECT action_id,type,target,status,attempts,priority,result FROM actions" + where + " ORDER BY priority DESC", tuple(args[:1]))
+        for r in rows:
+            print(f"{r['action_id']:<16} {r['type']:<16} {r['status']:<15} attempts={r['attempts']} prio={r['priority']:<6} {(r['target'] or '')[:30]:<30} {(r['result'] or '')[:50]}")
     else:
         print(__doc__); return 1
     return 0

@@ -227,6 +227,7 @@ def admin_state(request: Request):
         "growth_today": db.q("SELECT channel, message, drop_id, ts FROM activity WHERE actor='agent' AND ts>=? ORDER BY ts DESC LIMIT 25", (time.time() - 86400,)),
         "assets": db.q("SELECT * FROM assets ORDER BY updated_ts DESC LIMIT 300"),
         "expansion_feed": db.q("SELECT * FROM activity WHERE channel IN ('seo','directory','outreach','referral','embed','backlink','newsletter','press','localization','publisher','site') ORDER BY ts DESC LIMIT 60"),
+        "executor": stats.executor_summary(),
         "now": time.time(),
     }
 

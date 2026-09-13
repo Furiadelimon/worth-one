@@ -100,5 +100,7 @@ for cmd in plan.get("commands", [])[:10]:
         ctl("cmd", cmd["cmd"], cmd.get("arg", ""))
 ctl("run", "brain", "done", (plan.get("summary") or "")[:300], str(int(__import__('time').time()) + 6*3600))
 PY
+# hand freshly prepared assets straight to the Action Executor instead of waiting for its own timer
+worthctl executor >/dev/null 2>&1 || true
 # commit generated content so it is versioned and visible on GitHub
 git add -A engine/content >/dev/null 2>&1 && git -c user.email=worth-one-bot@users.noreply.github.com -c user.name="worth-one bot" commit -q -m "brain: content $STAMP" >/dev/null 2>&1 && git push -q origin HEAD:main >/dev/null 2>&1 || true

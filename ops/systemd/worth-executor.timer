@@ -1,0 +1,10 @@
+[Unit]
+Description=Worth One Action Executor, every 2 hours
+
+[Timer]
+OnCalendar=*-*-* 07,09,11,13,15,17,19,21:35:00 Europe/Madrid
+Persistent=true
+RandomizedDelaySec=180
+
+[Install]
+WantedBy=timers.target

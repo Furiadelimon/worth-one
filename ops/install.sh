@@ -25,17 +25,24 @@ fi
 if [ ! -d "$APP/.venv" ]; then python3 -m venv "$APP/.venv"; fi
 "$APP/.venv/bin/pip" install -q -r "$APP/server/requirements.txt"
 
+# Action Executor's Browser Executor: Chromium runtime libs (Playwright's own --with-deps installer
+# does not know Debian trixie's package names, so the equivalent packages are listed explicitly here).
+apt-get install -y fonts-liberation fonts-unifont libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+  libcups2t64 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+  libasound2t64 libpango-1.0-0 libcairo2 libatspi2.0-0t64 libx11-6 libxext6 >/dev/null 2>&1 || true
+"$APP/.venv/bin/python" -m playwright install chromium
+
 install -m 755 "$APP/ops/worthctl" /usr/local/bin/worthctl
 install -m 755 "$APP/ops/tunnel-sync.sh" /usr/local/bin/worth-tunnel-sync
 install -m 755 "$APP/ops/daily.sh" /usr/local/bin/worth-daily
 install -m 755 "$APP/ops/indexnow.sh" /usr/local/bin/worth-indexnow
 install -m 755 "$APP/ops/worth-authorize" /usr/local/bin/worth-authorize
 install -m 755 "$APP/brain/run.sh" /usr/local/bin/worth-brain
-for u in worth-one.service worth-tunnel.service worth-tunnel-sync.service worth-tunnel-sync.timer worth-daily.service worth-daily.timer worth-brain.service worth-brain.timer; do
+for u in worth-one.service worth-tunnel.service worth-tunnel-sync.service worth-tunnel-sync.timer worth-daily.service worth-daily.timer worth-brain.service worth-brain.timer worth-executor.service worth-executor.timer; do
   install -m 644 "$APP/ops/systemd/$u" /etc/systemd/system/$u
 done
 systemctl daemon-reload
-systemctl enable --now worth-one.service worth-daily.timer worth-brain.timer
+systemctl enable --now worth-one.service worth-daily.timer worth-brain.timer worth-executor.timer
 # Public ingress (Cloudflare quick tunnel) is only enabled when the owner explicitly asks for it: ENABLE_TUNNEL=1 bash ops/install.sh
 if [ "${ENABLE_TUNNEL:-0}" = "1" ]; then systemctl enable --now worth-tunnel.service worth-tunnel-sync.timer; fi
 systemctl restart worth-one.service

@@ -169,6 +169,38 @@ def expansion():
     }
 
 
+def executor_summary():
+    """ACTION EXECUTOR panel: queue state, what ran today, and the standing human batch."""
+    since_today = _since(1)
+    counts_by_status = {r["status"]: r["n"] for r in q("SELECT status, COUNT(*) n FROM actions GROUP BY status")}
+    submitted_today = q1("SELECT COUNT(*) n FROM actions WHERE status IN ('SUBMITTED','LIVE') AND last_attempt>=?", (since_today,))["n"]
+    executed_today = q1("SELECT COUNT(*) n FROM actions WHERE last_attempt>=?", (since_today,))["n"]
+    verified_today = q1("SELECT COUNT(*) n FROM actions WHERE status='LIVE' AND updated_ts>=?", (since_today,))["n"]
+    failed_today = q1("SELECT COUNT(*) n FROM actions WHERE status IN ('FAILED','STALE') AND last_attempt>=?", (since_today,))["n"]
+    outreach_today = q1("SELECT COUNT(*) n FROM actions WHERE type='email_outreach' AND status IN ('SUBMITTED','LIVE') AND last_attempt>=?", (since_today,))["n"]
+    human_pending = q("""SELECT action_id, type, target, url, priority, estimated_human_time, human_action_text, human_required_reason
+                          FROM actions WHERE status='HUMAN_REQUIRED' ORDER BY priority DESC LIMIT 20""")
+    last_run = q1("SELECT ts, status, summary FROM runs WHERE kind='executor' ORDER BY ts DESC LIMIT 1")
+    last_telegram = q1("SELECT ts, human_actions_count, estimated_minutes FROM telegram_log ORDER BY ts DESC LIMIT 1")
+    recent = q("""SELECT action_id, type, target, status, attempts, result, drop_id, updated_ts
+                  FROM actions ORDER BY updated_ts DESC LIMIT 40""")
+    for r in recent:
+        r["traffic"] = 0
+        if r.get("drop_id"):
+            src_like = "%" + r["action_id"].lower() + "%"
+            r["traffic"] = q1("SELECT COUNT(DISTINCT sid) n FROM events WHERE type='page_view' AND drop_id=? AND lower(src) LIKE ?", (r["drop_id"], src_like))["n"]
+    return {
+        "queue_counts": counts_by_status,
+        "today": {"executed": executed_today, "submitted": submitted_today, "verified_live": verified_today,
+                   "failed": failed_today, "outreach_sent": outreach_today},
+        "human_pending": human_pending,
+        "human_pending_minutes": sum((h["estimated_human_time"] or 3) for h in human_pending),
+        "last_run": last_run,
+        "last_telegram": last_telegram,
+        "recent": recent,
+    }
+
+
 def compare(drop_id, json_key, value, min_n=50):
     rows = q("SELECT CAST(json_extract(meta,?) AS REAL) v FROM events WHERE type='drop_result' AND drop_id=? AND json_extract(meta,?) IS NOT NULL", [json_key, drop_id, json_key])
     vals = sorted(r["v"] for r in rows if r["v"] is not None)
