@@ -37,9 +37,23 @@ def build(day=None, insights=None):
     learned = ins.get("learned") or "More traffic needed before any statistical conclusion."
     plan = ins.get("plan") or "Keep DROP-001 live, publish prepared content on authorized channels, add DROP-002 if the pipeline allows."
     fund = stats.car_fund()
+    sc = stats.scorecard(1)
+    w = stats.winners(14)
+    tops = [x for x in w["experiments"] if x["qualified"]][:5]
     lines = [
         f"DAILY REPORT  {day}  (PROJECT WORTH ONE)",
         "=" * 48,
+        "GROWTH SCORECARD",
+        f"  REAL USERS (total) {sc['real_users_total']}   new {sc['new_users']}   views {sc['views']}   results {sc['results']}",
+        f"  SHARES {sc['shares']}  rate {sc['share_rate']:.1%}   REFERRAL USERS {sc['referral_users']}   K {sc['k']}   mode {sc['viral']['mode']}",
+        f"  WORTH 1EUR INTENTS {sc['worth1_intents']}   COUNTRIES {sc['countries']}",
+        f"  SEO impressions {sc['seo_impressions'] if sc['seo_impressions'] is not None else 'n/a'}  clicks {sc['seo_clicks'] if sc['seo_clicks'] is not None else 'n/a'}  seo users 7d {sc['seo_users']}",
+        f"  OUTREACH SENT {sc['outreach_sent']}   DIRECTORY LISTINGS {sc['directory_listings']}   BACKLINKS {sc['backlinks']}   EMBED VIEWS {sc['embed_views']}",
+        f"  TIKTOK views {sc['tiktok_views']} -> site users {sc['tiktok_users']}",
+        f"  AI COST USD {sc['ai_cost_usd']:.4f}   USERS / EUR AI {sc['users_per_eur_ai'] if sc['users_per_eur_ai'] is not None else 'n/a'}",
+        "  TOP EXPERIMENTS (drop x channel x country x hook, 14d, qualified):",
+    ] + ([f"    {x['drop_id']} {x['channel']}/{x['country']}/{x['hook']}: {x['users']}u share {x['share_rate']:.0%} intent {x['intent_rate']:.0%} -> {x['verdict']}" for x in tops] or ["    none qualified yet (needs >=5 users per cell)"]) + [
+        "",
         f"TRAFFIC (views)      {d1['page_views']}",
         f"USERS                {d1['users']}",
         f"NEW USERS            {d1['new_users']}",

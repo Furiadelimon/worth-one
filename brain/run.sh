@@ -19,8 +19,9 @@ if { [ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ] && [ ! -f /root/.claude/.credentials.
   worthctl run brain skipped "brain not authorized (no CLAUDE_CODE_OAUTH_TOKEN)" "$NEXT"; exit 0
 fi
 
-STATE=$(worthctl state)
-PROMPT=$(cat "$APP/brain/prompt.md"; echo; echo '## CURRENT STATE (JSON)'; echo "$STATE"; echo; echo '## EXISTING CONTENT FILES'; ls -1 "$APP/engine/content" 2>/dev/null)
+STATE=$(worthctl state --compact)
+PROMPT=$(cat "$APP/brain/prompt.md"; echo; echo '## CURRENT STATE (compact JSON)'; echo "$STATE"; echo; echo '## CONTENT ALREADY WRITTEN (do not repeat)'; ls -1 "$APP/engine/content" "$APP/engine/tiktok" 2>/dev/null | tr '
+' ' ')
 cd "$APP"
 worthctl cmd "SET CURRENT ACTION" "Brain run $STAMP in progress" >/dev/null
 RAW=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" --output-format json --max-turns 3 --tools "" 2>"$OUT/$STAMP.err") || true
@@ -64,6 +65,30 @@ for c in plan.get("campaigns", [])[:20]:
     p = f"{out}/{stamp}-{c['campaign_id']}.json"; json.dump(c, open(p, "w")); ctl("campaign", p)
 for h in plan.get("human_actions", [])[:5]:
     ctl("human", h.get("title", "")[:120], h.get("detail", "")[:800])
+# TikTok creatives: finished content the owner must publish manually (no API access)
+tt = plan.get("tiktok_creatives", [])[:4]
+if tt:
+    lines = ["# TikTok creatives generated " + stamp, "Status: MANUAL_PUBLISH_REQUIRED. Words Before Coffee account, cross-promotion only.", ""]
+    for c in tt:
+        url = f"https://furiadelimon.github.io/worth-one/{'es/' if c.get('language') == 'es' else ''}drops/{'doomscroll-receipt' if c.get('drop_id') == 'DROP-001' else 'subscription-receipt'}/?src=wbc-tiktok&c={c.get('campaign_id', '')}"
+        lines += [f"## {c.get('campaign_id', '')} ({c.get('language', 'en')})", f"**Hook:** {c.get('hook', '')}", f"**Beats:** {c.get('beats', '')}", f"**Caption:** {c.get('caption', '')}", f"**Link:** {url}", ""]
+        p = f"{out}/{stamp}-{c.get('campaign_id', 'TT')}.json"
+        json.dump({"campaign_id": c.get("campaign_id"), "drop_id": c.get("drop_id"), "platform": "tiktok",
+                   "account": "Words Before Coffee (authorized, cross-promotion only)", "language": c.get("language", "en"),
+                   "country": "ES" if c.get("language") == "es" else "GLOBAL", "audience": "FYP + existing followers",
+                   "hypothesis": c.get("hook", "")[:200], "content": "engine/tiktok/generated.md", "cta": "free calculator - link in bio",
+                   "url": url, "status": "manual_publish_required",
+                   "community_rules": "TikTok guidelines; no health claims; no owner identity; 1-2 Worth One pieces/day max."}, open(p, "w"))
+        ctl("campaign", p)
+    open("/opt/worth-one/engine/tiktok/generated.md", "a", encoding="utf-8").write("
+".join(lines) + "
+")
+    ctl("activity", "tiktok", f"Generated {len(tt)} TikTok creatives (MANUAL_PUBLISH_REQUIRED): " + ", ".join(c.get("campaign_id", "") for c in tt), "")
+# strategic escalations go to the owner, not to guesswork
+for e in plan.get("escalate", [])[:3]:
+    t = f"STRATEGIC DECISION: {e.get('decision', '')[:100]}"
+    ctl("human", t, f"Evidence: {e.get('evidence', '')[:400]} | Options: {e.get('options', '')[:400]}")
+    ctl("notify", t)
 for k, v in (plan.get("content") or {}).items():
     safe = re.sub(r"[^A-Za-z0-9._-]", "_", k)[:80]
     open(f"/opt/worth-one/engine/content/{safe}", "w", encoding="utf-8").write(v)

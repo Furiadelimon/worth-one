@@ -6,4 +6,4 @@ if [ -s "$INS" ]; then R=$(worthctl report --insights "$INS"); else R=$(worthctl
 worthctl notify "$(echo "$R" | head -24)" >/dev/null 2>&1 || true
 git -C /opt/worth-one pull --ff-only -q || true
 /usr/local/bin/worth-indexnow || true
-worthctl outreach-batch 3 || true
+worthctl outreach-batch 5 || true

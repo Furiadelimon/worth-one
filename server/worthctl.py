@@ -11,7 +11,9 @@
   worthctl human "<title>" "<detail>"      register HUMAN ACTION REQUIRED
   worthctl aicost <run> <model> <in> <out> <usd>
   worthctl run <kind> <status> "<summary>" [next_epoch]
-  worthctl state                           JSON dump used by the brain prompt
+  worthctl state [--compact]               JSON dump used by the brain prompt (--compact = cheap, for routine runs)
+  worthctl scorecard                       daily growth scorecard (deterministic)
+  worthctl winners                         drop x channel x country x hook experiments + verdicts
   worthctl notify "<text>"                 ntfy push to the owner (if configured)
   worthctl asset <file.json>               upsert expansion asset(s): directory/newsletter/publisher/backlink/embed/press
   worthctl assets [type]                   list expansion assets
@@ -66,7 +68,23 @@ def status():
         print(f"HUMAN ACTION REQUIRED #{a['id']}: {a['title']}")
 
 
-def state():
+def state(compact=False):
+    if compact:
+        w = stats.winners(14)
+        out = {
+            "settings": {k: v for k, v in db.all_settings().items() if k in ("PROJECT_STATUS", "PAYMENTS_ENABLED", "CAR_TARGET", "PRIORITY", "PAUSED_CHANNELS", "BLOCKED_CHANNELS", "BLOCKED_COUNTRIES", "NEXT_EXPANSION_ACTION")},
+            "scorecard_24h": stats.scorecard(1),
+            "metrics_7d": {k: stats.counts(days=7)[k] for k in ("users", "page_views", "drop_results", "shares", "share_rate", "referral_new_users", "k", "would_support_1plus")},
+            "experiments_14d": w["experiments"][:12],
+            "drops": db.q("SELECT drop_id,name,status,score FROM drops ORDER BY score DESC"),
+            "assets": db.q("SELECT asset_id,type,name,status,contact FROM assets ORDER BY updated_ts DESC LIMIT 25"),
+            "channels_7d": stats.by_channel(days=7),
+            "countries_7d": stats.by_country(days=7)[:10],
+            "open_human_actions": db.q("SELECT id,title FROM human_actions WHERE status='open'"),
+            "recent_actions": db.q("SELECT channel,substr(message,1,90) message FROM activity WHERE actor='agent' ORDER BY ts DESC LIMIT 15"),
+            "tiktok_campaigns": db.q("SELECT campaign_id,drop_id,status,impressions,visitors FROM campaigns WHERE platform='tiktok'"),
+        }
+        print(json.dumps(out, indent=1, default=str)); return
     out = {
         "settings": db.all_settings(),
         "fund": stats.car_fund(),
@@ -95,7 +113,14 @@ def main(argv):
     if cmd == "status":
         status()
     elif cmd == "state":
-        state()
+        state("--compact" in args)
+    elif cmd == "scorecard":
+        print(json.dumps(stats.scorecard(1), indent=1, default=str))
+    elif cmd == "winners":
+        w = stats.winners(14)
+        for x in w["experiments"]:
+            print(f"{x['drop_id']:<9} {x['channel']:<22} {x['country']:<3} {x['hook']:<16} users={x['users']:<4} share={x['share_rate']:.0%} intent={x['intent_rate']:.0%}  {x['verdict']}")
+        print("viral:", json.dumps(stats.viral_mode()))
     elif cmd == "seed":
         seed()
     elif cmd == "cmd":

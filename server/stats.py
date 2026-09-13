@@ -177,3 +177,58 @@ def compare(drop_id, json_key, value, min_n=50):
         return {"n": n, "ready": False}
     below = sum(1 for v in vals if v < value)
     return {"n": n, "ready": True, "avg": round(sum(vals) / n, 2), "median": vals[n // 2], "pct_below": round(100 * below / n)}
+
+
+def winners(days=14, min_users=5):
+    """DROP x CHANNEL x COUNTRY x HOOK(campaign) as separate experiments. Cheap SQL, no AI."""
+    p = [_since(days)]
+    rows = q("""SELECT drop_id, COALESCE(NULLIF(src,''),'direct') channel, COALESCE(NULLIF(country,''),'XX') country,
+                COALESCE(NULLIF(campaign,''),'-') hook,
+                COUNT(DISTINCT CASE WHEN type='page_view' THEN sid END) users,
+                COUNT(DISTINCT CASE WHEN type='drop_result' THEN sid END) results,
+                COUNT(DISTINCT CASE WHEN type='share' THEN sid END) sharers,
+                SUM(type='support_intent' AND amount>0) intents
+                FROM events WHERE ts>=? AND drop_id IS NOT NULL AND drop_id!=''
+                GROUP BY 1,2,3,4 HAVING users>0 ORDER BY users DESC LIMIT 40""", p)
+    ref = {r["ref"]: r["n"] for r in q("SELECT ref, COUNT(*) n FROM sessions WHERE ref IS NOT NULL AND ref!='' AND first_ts>=? GROUP BY 1", p)}
+    total_ref = sum(ref.values())
+    for r in rows:
+        r["share_rate"] = round(r["sharers"] / r["results"], 3) if r["results"] else 0
+        r["intent_rate"] = round(r["intents"] / r["results"], 3) if r["results"] else 0
+        r["qualified"] = r["users"] >= min_users
+        r["verdict"] = ("needs traffic" if not r["qualified"] else
+                        "SCALE" if r["share_rate"] >= 0.10 or r["intent_rate"] >= 0.10 else
+                        "iterate" if r["share_rate"] > 0 else "kill candidate")
+    return {"experiments": rows, "referral_new_users": total_ref}
+
+
+def viral_mode():
+    """Thresholds from the directive: K>=1 viral scale, K>0.5 high priority, K>0.3 more resources."""
+    c = counts(days=14)
+    k = c["k"]; sr = c["share_rate"]
+    mode = ("VIRAL SCALE" if k >= 1 else "HIGH PRIORITY" if k > 0.5 else "INCREASE RESOURCES" if k > 0.3 else "BASELINE")
+    return {"k_14d": k, "share_rate_14d": sr, "mode": mode, "share_rate_alert": sr > 0.10}
+
+
+def scorecard(days=1):
+    """Daily growth scorecard. All deterministic; the only cost is SQL."""
+    c = counts(days=days)
+    e = expansion()
+    cost = ai_cost(days)
+    since = time.time() - days * 86400
+    sent = q1("SELECT COUNT(*) n FROM assets WHERE submitted_ts>=?", (since,))["n"]
+    listed = q1("SELECT COUNT(*) n FROM assets WHERE status IN ('accepted','live','published') AND updated_ts>=?", (since,))["n"]
+    tiktok = q1("""SELECT COUNT(DISTINCT sid) users FROM events WHERE ts>=? AND type='page_view' AND src LIKE '%tiktok%'""", (since,))["users"]
+    tt_views = q1("SELECT COALESCE(SUM(impressions),0) n FROM campaigns WHERE platform='tiktok'")["n"]
+    usd = cost["usd"] or 0
+    return {
+        "real_users_total": counts()["users"], "new_users": c["new_users"], "users": c["users"], "views": c["page_views"],
+        "results": c["drop_results"], "shares": c["share_events"], "share_rate": c["share_rate"],
+        "referral_users": c["referral_new_users"], "k": c["k"], "worth1_intents": c["would_support_1plus"],
+        "countries": len(by_country(days)), "seo_impressions": e["search_impressions"], "seo_clicks": e["organic_clicks"],
+        "seo_users": e["seo_users_7d"], "outreach_sent": sent, "directory_listings": listed,
+        "backlinks": e["backlinks"], "embed_views": e["embeds_views"],
+        "tiktok_views": tt_views, "tiktok_users": tiktok,
+        "ai_cost_usd": round(usd, 4), "users_per_eur_ai": round(c["users"] / (usd * 0.92), 1) if usd > 0.001 else None,
+        "viral": viral_mode(),
+    }
