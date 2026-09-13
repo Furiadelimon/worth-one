@@ -45,11 +45,15 @@ CHECKS = [
 POLICY_CACHE_DAYS = 30
 DOMAIN_COOLDOWN_DAYS = 30
 
+# A real prohibition names AI/automation AND the thing refused (pitch, submission, email, message, content, outreach)
+# in one breath. "No login · AI Tools" on a directory page is a category label, not a policy.
+_AI_TERMS = r"(?:ai|a\.i\.|artificial intelligence|ai-generated|ai generated|chatgpt|llm|automated|bot|machine)"
+_MSG_TERMS = r"(?:submissions?|pitches|emails?|messages?|content|outreach|requests?|proposals?|inquiries|mail)"
 AI_FORBID = re.compile(
-    r"(no|not accept|do not accept|don't accept|reject|refuse|prohib)[^.\n]{0,40}\b(ai|a\.i\.|artificial intelligence|"
-    r"ai-generated|ai generated|chatgpt|llm|automated|bot-written|machine-written|inteligencia artificial|"
-    r"generad[oa]s? (por|con) ia|escrit[oa]s? por ia)\b|\b(ai|a\.i\.)[- ]?(generated|written|assisted)[^.\n]{0,40}"
-    r"\b(not accepted|will be (ignored|deleted|rejected)|prohibited|banned)\b",
+    rf"\bno {_AI_TERMS}[- ]?(?:generated |written |assisted |driven )?{_MSG_TERMS}\b"
+    rf"|\b(?:do not|don't|won't|will not|never) (?:accept|read|respond to|consider|reply to|publish)[^.\n]{{0,30}}\b{_AI_TERMS}[- ]?(?:generated |written |assisted )?{_MSG_TERMS}\b"
+    rf"|\b{_AI_TERMS}[- ]?(?:generated |written |assisted )?{_MSG_TERMS}\b[^.\n]{{0,40}}\b(?:not accepted|will be (?:ignored|deleted|rejected)|prohibited|banned|are not welcome|get rejected|are rejected)\b"
+    r"|\bno (?:aceptamos|se aceptan|admitimos|leemos)\b[^.\n]{0,40}\b(?:inteligencia artificial|generad[oa]s? (?:por|con) ia|escrit[oa]s? por ia|automatizad[oa]s?|bots?)\b",
     re.I,
 )
 UNSOLICITED_FORBID = re.compile(

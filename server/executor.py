@@ -247,6 +247,10 @@ def _set_asset(asset_id, status, result=None):
 
 def sync_from_assets():
     created = 0
+    # actions parked under the old HUMAN_REQUIRED status get one fresh classification: several of them now have an
+    # autonomous route (a public email with an authored pitch, a tested form recipe), the rest become MANUAL_ONLY.
+    with db.tx() as c:
+        c.execute("UPDATE actions SET status='PREPARED', updated_ts=? WHERE drop_id='WBC' AND status='HUMAN_REQUIRED'", (time.time(),))
     for a in db.q("SELECT * FROM assets WHERE drop_id='WBC' AND status='prepared'"):
         eu, conf, sv, eff = DEFAULTS_BY_TYPE.get(a["type"], (8, 0.4, 0.5, 0.3))
         if db.add_action("ACT-" + a["asset_id"], "pending_classification", asset_id=a["asset_id"], target=a["name"], url=a["url"],
